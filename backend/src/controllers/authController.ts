@@ -1,7 +1,8 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { PrismaClient } from '../../generated/prisma';
 import { hashPassword, comparePasswords, generateToken } from '../utils/authUtils';
 import { UserInput } from '../types';
+import passport from '../config/passport';
 
 const prisma = new PrismaClient();
 
@@ -83,7 +84,20 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     
     console.log(`Utilisateur trouvé: ${user.email}, rôle: ${user.role}`);
 
+    // Vérifier si l'utilisateur utilise Google OAuth
+    if (user.provider === 'google' && !user.password) {
+      console.log(`Connexion échouée: utilisateur ${email} doit utiliser Google OAuth`);
+      res.status(401).json({ message: 'Please use Google Sign-In for this account.' });
+      return;
+    }
+
     // Verify password
+    if (!user.password) {
+      console.log(`Connexion échouée: mot de passe manquant pour ${email}`);
+      res.status(401).json({ message: 'Invalid email or password.' });
+      return;
+    }
+
     const isPasswordValid = await comparePasswords(password, user.password);
     console.log(`Vérification du mot de passe pour ${email}: ${isPasswordValid ? 'Succès' : 'Échec'}`);
 
@@ -112,4 +126,40 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     console.error('Error during login:', error);
     res.status(500).json({ message: 'Internal server error.' });
   }
+};
+
+// Google OAuth - Initier l'authentification
+export const googleAuth = passport.authenticate('google', {
+  scope: ['profile', 'email']
+});
+
+// Google OAuth - Callback après authentification
+export const googleCallback = (req: Request, res: Response, next: NextFunction) => {
+  passport.authenticate('google', { session: false }, (err: any, user: any) => {
+    if (err || !user) {
+      console.error('Google OAuth error:', err);
+      // Rediriger vers le frontend avec une erreur
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
+      return res.redirect(`${frontendUrl}/login?error=auth_failed`);
+    }
+
+    try {
+      // Générer le token JWT
+      const token = generateToken(user.id);
+
+      // Rediriger vers le frontend avec le token
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
+      res.redirect(`${frontendUrl}/auth/callback?token=${token}`);
+    } catch (error) {
+      console.error('Error generating token:', error);
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
+      res.redirect(`${frontendUrl}/login?error=token_generation_failed`);
+    }
+  })(req, res, next);
+};
+
+// Google OAuth - Gestion de l'échec d'authentification
+export const googleAuthFailure = (req: Request, res: Response): void => {
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
+  res.redirect(`${frontendUrl}/login?error=authentication_failed`);
 };

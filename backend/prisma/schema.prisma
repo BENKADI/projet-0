@@ -17,7 +17,9 @@ datasource db {
 model User {
   id           Int           @id @default(autoincrement())
   email        String        @unique
-  password     String
+  password     String?       // Optionnel pour les utilisateurs OAuth
+  googleId     String?       @unique // ID Google pour OAuth
+  provider     String        @default("local") // "local", "google"
   role         String        @default("user") // Valeurs possibles: "user", "admin"
   firstName    String?
   lastName     String?

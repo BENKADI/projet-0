@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import swaggerUi from 'swagger-ui-express';
+import passport from './config/passport';
 import { authRoutes, permissionRoutes, userRoutes } from './routes';
 import healthRoutes from './routes/health.routes';
 import { swaggerSpec } from './config/swagger';
@@ -35,6 +36,9 @@ app.use(cors(corsOptions));
 // Body parser
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Initialisation de Passport
+app.use(passport.initialize());
 
 // Request logging
 app.use(requestLogger);
