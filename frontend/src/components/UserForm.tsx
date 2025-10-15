@@ -114,36 +114,49 @@ const UserForm: React.FC<UserFormProps> = ({ userId, isEdit = false, onSave, onC
   }
 
   return (
-    <div className="flex flex-col h-full">
-      <form id="user-form" onSubmit={handleSubmit}>
-        <CardHeader>
-          <CardTitle>{isEdit ? 'Modifier l\'utilisateur' : 'Ajouter un nouvel utilisateur'}</CardTitle>
-        </CardHeader>
-        <CardContent>
+    <div className="w-full max-w-4xl mx-auto">
+      <form id="user-form" onSubmit={handleSubmit} className="space-y-6">
+        <div className="text-center pb-4 border-b">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+            {isEdit ? '✏️ Modifier l\'utilisateur' : '➕ Nouvel utilisateur'}
+          </h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+            {isEdit ? 'Modifiez les informations de l\'utilisateur' : 'Remplissez les informations pour créer un nouveau compte'}
+          </p>
+        </div>
+        <div className="space-y-6 px-6">
           {error && (
-            <div className="mb-4">
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Erreur</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            </div>
+            <Alert variant="destructive" className="animate-in fade-in slide-in-from-top-2">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Erreur</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email*</Label>
-              <Input
-                type="email"
+
+          {/* Section Informations de base */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <span className="text-xl">👤</span>
+              Informations personnelles
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-medium">Email *</Label>
+                <Input
+                  type="email"
                 id="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
                 required
-                disabled={saving}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="password">{isEdit ? 'Nouveau mot de passe' : 'Mot de passe*'}</Label>
+                  disabled={saving}
+                  className="w-full"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-sm font-medium">
+                  {isEdit ? 'Nouveau mot de passe' : 'Mot de passe *'}
+                </Label>
               <Input
                 placeholder={isEdit ? 'Laisser vide pour ne pas changer' : ''}
                 type="password"
@@ -152,39 +165,54 @@ const UserForm: React.FC<UserFormProps> = ({ userId, isEdit = false, onSave, onC
                 value={formData.password}
                 onChange={handleChange}
                 required={!isEdit}
-                disabled={saving}
-              />
+                  disabled={saving}
+                  className="w-full"
+                />
+              </div>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="firstName">Prénom</Label>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="firstName" className="text-sm font-medium">Prénom</Label>
               <Input
                 type="text"
                 id="firstName"
                 name="firstName"
                 value={formData.firstName || ''}
                 onChange={handleChange}
-                disabled={saving}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="lastName">Nom</Label>
+                  disabled={saving}
+                  className="w-full"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName" className="text-sm font-medium">Nom</Label>
               <Input
                 type="text"
                 id="lastName"
                 name="lastName"
                 value={formData.lastName || ''}
                 onChange={handleChange}
-                disabled={saving}
-              />
+                  disabled={saving}
+                  className="w-full"
+                />
+              </div>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="role">Rôle*</Label>
+          </div>
+
+          {/* Section Rôle et accès */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <span className="text-xl">🛡️</span>
+              Rôle et accès
+            </h3>
+            <div className="space-y-2">
+              <Label htmlFor="role" className="text-sm font-medium">Rôle *</Label>
               <select
                 id="role"
                 name="role"
                 value={formData.role}
                 onChange={handleChange}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-10 w-full rounded-lg border-2 border-input bg-background px-3 py-2 text-sm font-medium ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all"
                 required
                 disabled={saving}
               >
@@ -193,13 +221,19 @@ const UserForm: React.FC<UserFormProps> = ({ userId, isEdit = false, onSave, onC
               </select>
             </div>
           </div>
-          <div className="mt-6">
-            <Label className="text-base font-semibold text-foreground mb-2 block">
+
+          {/* Section Permissions */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <span className="text-xl">🔐</span>
               Permissions
-            </Label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
               {permissions.map(permission => (
-                <div key={permission.id} className="flex items-center gap-2">
+                <label
+                  key={permission.id}
+                  className="flex items-center gap-2 p-2 rounded-md hover:bg-white dark:hover:bg-gray-700 cursor-pointer transition-colors"
+                >
                   <input
                     type="checkbox"
                     id={`permission-${permission.id}`}
@@ -207,26 +241,39 @@ const UserForm: React.FC<UserFormProps> = ({ userId, isEdit = false, onSave, onC
                     checked={formData.permissionIds?.includes(permission.id) || false}
                     onChange={handleCheckboxChange}
                     disabled={saving}
-                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-2 focus:ring-primary cursor-pointer"
                   />
-                  <Label htmlFor={`permission-${permission.id}`} className="font-normal">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer select-none">
                     {permission.name}
-                  </Label>
-                </div>
+                  </span>
+                </label>
               ))}
             </div>
           </div>
-        </CardContent>
+        </div>
+
+        {/* Boutons d'action */}
+        <div className="flex justify-center gap-3 px-6 pb-6 pt-4 border-t">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={saving}
+            className="min-w-[120px] h-11"
+          >
+            ❌ Annuler
+          </Button>
+          <Button
+            type="submit"
+            form="user-form"
+            disabled={saving}
+            className="min-w-[120px] h-11 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
+          >
+            {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {saving ? '⏳ Enregistrement...' : isEdit ? '💾 Enregistrer' : '✨ Créer'}
+          </Button>
+        </div>
       </form>
-      <CardFooter className="flex justify-end gap-2 border-t pt-4 mt-auto">
-        <Button type="button" variant="outline" onClick={onCancel} disabled={saving}>
-          Annuler
-        </Button>
-        <Button type="submit" form="user-form" disabled={saving}>
-          {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {saving ? 'Enregistrement...' : 'Enregistrer'}
-        </Button>
-      </CardFooter>
     </div>
   );
 };

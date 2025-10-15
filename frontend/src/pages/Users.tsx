@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/Sheet';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 import UserForm from '@/components/UserForm';
 import { User, getAllUsers, deleteUser } from '@/services/userService';
 import { DataTableToolbar } from '@/components/ui/DataTableToolbar';
@@ -274,11 +274,8 @@ const Users: React.FC = () => {
           </div>
         </div>
       </div>
-      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent className="sm:max-w-2xl">
-          <SheetHeader>
-            <SheetTitle>{editingUser ? 'Modifier l\'utilisateur' : 'Ajouter un nouvel utilisateur'}</SheetTitle>
-          </SheetHeader>
+      <Dialog open={sheetOpen} onOpenChange={setSheetOpen}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <UserForm
             key={editingUser ? editingUser.id : 'new'}
             userId={editingUser?.id}
@@ -286,8 +283,8 @@ const Users: React.FC = () => {
             onSave={handleSave}
             onCancel={handleCancel}
           />
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
