@@ -1,8 +1,8 @@
 # Script PowerShell pour gérer l'application GMP Digital Print
 # Menu interactif numéroté pour faciliter l'utilisation
 
-$backendPath = "D:\project\gmpdigitalprint\backend"
-$frontendPath = "D:\project\gmpdigitalprint\frontend"
+$backendPath = "D:\project\windsurf\projet-0\backend"
+$frontendPath = "D:\project\windsurf\projet-0\frontend"
 $backendPort = 3000
 $frontendPort = 3001
 $dbStudioPort = 5555
