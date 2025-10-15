@@ -107,10 +107,18 @@ cd projet-0
 cd backend
 npm install
 cp .env.example .env
-# Modifier .env avec vos configurations
+### Étape 4: Migrer et initialiser la base de données
+```bash
+cd backend
 npx prisma generate
 npx prisma migrate dev
+npm run prisma:seed  # Crée l'admin par défaut
 ```
+
+**📧 Identifiants Admin par défaut :**
+- Email: `admin@projet0.com`
+- Mot de passe: `Admin123!`
+- ⚠️ **Changez le mot de passe après la première connexion !**
 
 #### 3. Configuration Frontend
 ```bash

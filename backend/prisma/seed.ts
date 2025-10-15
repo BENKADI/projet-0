@@ -24,8 +24,10 @@ const defaultPermissions = [
 // Note: Les ressources ont été retirées car elles ne sont pas définies dans le schéma Prisma actuel
 
 async function main() {
+  console.log('\n🌱 Initialisation de la base de données...\n')
+  
   // 1. Créer les permissions par défaut
-  console.log('Création des permissions par défaut...')
+  console.log('📝 Création des permissions par défaut...')
   for (const permission of defaultPermissions) {
     await prisma.permission.upsert({
       where: { name: permission.name },
@@ -36,8 +38,11 @@ async function main() {
   
   // Note: La création des ressources a été retirée car le modèle resource n'existe pas dans le schéma Prisma actuel
   
+  console.log(`✅ ${defaultPermissions.length} permissions créées\n`)
+  
   // 3. Récupérer toutes les permissions
   const allPermissions = await prisma.permission.findMany()
+  console.log('👤 Vérification de l\'administrateur...')
   
   // 4. Vérifier si un admin existe déjà
   const adminUser = await prisma.user.findFirst({
@@ -56,18 +61,26 @@ async function main() {
     // Créer l'administrateur avec toutes les permissions
     const newAdmin = await prisma.user.create({
       data: {
-        email: 'admin@gmpdigitalprint.com',
+        email: 'admin@projet0.com',
         password: hashedPassword,
         role: 'admin',
-        firstName: 'Admin',
-        lastName: 'System',
+        firstName: 'Super',
+        lastName: 'Admin',
         permissions: {
           connect: allPermissions.map(p => ({ id: p.id }))
         }
       }
     })
     
-    console.log(`Utilisateur administrateur créé avec l'ID: ${newAdmin.id}, avec ${allPermissions.length} permissions.`)
+    console.log('\n✅ ADMINISTRATEUR CRÉÉ AVEC SUCCÈS!')
+    console.log('='.repeat(50))
+    console.log('📧 Email: admin@projet0.com')
+    console.log('🔑 Mot de passe: Admin123!')
+    console.log('👤 Nom: Super Admin')
+    console.log('🛡️  Rôle: admin')
+    console.log(`✨ Permissions: ${allPermissions.length}`)
+    console.log('='.repeat(50))
+    console.log('⚠️  IMPORTANT: Changez le mot de passe après la première connexion!\n')
   } else {
     // Mettre à jour l'admin existant pour ajouter des permissions manquantes
     const existingPermissionsIds = adminUser.permissions.map(p => p.id)

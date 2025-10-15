@@ -31,12 +31,18 @@ DATABASE_URL="postgresql://user:password@localhost:5432/projet0_db?schema=public
 JWT_SECRET="votre-secret-jwt-super-securise"
 ```
 
-### Étape 4: Migrer la base de données
+### Étape 4: Migrer et initialiser la base de données
 ```bash
 cd backend
 npx prisma migrate dev
 npx prisma generate
+npm run prisma:seed  # Créer l'administrateur et les permissions
 ```
+
+**🔐 Compte Admin créé :**
+- 📧 Email: `admin@projet0.com`
+- 🔑 Mot de passe: `Admin123!`
+- ⚠️ **Changez immédiatement le mot de passe !**
 
 ### Étape 5: Démarrer l'application
 ```bash
