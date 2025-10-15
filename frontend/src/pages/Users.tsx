@@ -9,7 +9,10 @@ import { Button } from '@/components/ui/Button';
 import { toast } from 'sonner';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/Alert';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/Card';
-import { Loader2, UserPlus, Trash2, Edit, Check, X, AlertCircle, ArrowUpDown } from 'lucide-react';
+import { Badge } from '@/components/ui/Badge';
+import { Avatar, AvatarFallback } from '@/components/ui/Avatar';
+import { Separator } from '@/components/ui/Separator';
+import { Loader2, UserPlus, Trash2, Edit, Check, X, AlertCircle, ArrowUpDown, Mail, User as UserIcon } from 'lucide-react';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { DataTableSkeleton } from '@/components/ui/DataTableSkeleton';
 
@@ -205,9 +208,7 @@ const Users: React.FC = () => {
           <table className="min-w-full divide-y divide-border">
             <thead className="bg-muted/50">
               <tr>
-                {renderTableHeader('id', 'ID')}
-                {renderTableHeader('email', 'Email')}
-                {renderTableHeader('name', 'Nom')}
+                {renderTableHeader('name', 'Utilisateur')}
                 {renderTableHeader('role', 'Rôle')}
                 {renderTableHeader('createdAt', 'Date de création')}
                 <th scope="col" className="relative px-6 py-3"><span className="sr-only">Actions</span></th>
@@ -215,15 +216,30 @@ const Users: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-border">
               {paginatedUsers.length === 0 ? (
-                <tr><td colSpan={6} className="px-6 py-4 text-center text-muted-foreground">Aucun utilisateur trouvé</td></tr>
+                <tr><td colSpan={4} className="px-6 py-4 text-center text-muted-foreground">Aucun utilisateur trouvé</td></tr>
               ) : (
                 paginatedUsers.map(user => (
                   <tr key={user.id} className="hover:bg-muted/50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{user.id}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{user.email}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{getUserDisplayName(user)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
-                      <span className={`px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${user.role === 'admin' ? 'bg-primary/20 text-primary' : 'bg-accent text-accent-foreground'}`}>{user.role}</span>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-8 w-8">
+                          <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-xs font-semibold">
+                            {getUserDisplayName(user).substring(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="text-sm font-medium text-foreground">{getUserDisplayName(user)}</div>
+                          <div className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Mail className="h-3 w-3" />
+                            {user.email}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <Badge variant={user.role === 'admin' ? 'default' : 'secondary'} className="font-medium">
+                        {user.role === 'admin' ? '🔑 Admin' : '👤 User'}
+                      </Badge>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">{new Date(user.createdAt).toLocaleDateString()}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -251,16 +267,35 @@ const Users: React.FC = () => {
           <h2 className="text-xl font-semibold mb-4 text-foreground">Vue cartes</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-6">
             {paginatedUsers.map(user => (
-              <Card key={user.id}>
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <span className="truncate">{getUserDisplayName(user)}</span>
-                    <span className={`px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${user.role === 'admin' ? 'bg-primary/20 text-primary' : 'bg-accent text-accent-foreground'}`}>{user.role}</span>
-                  </CardTitle>
+              <Card key={user.id} className="hover:shadow-lg transition-shadow duration-200">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-10 w-10">
+                        <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold">
+                          {getUserDisplayName(user).substring(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <CardTitle className="text-base">{getUserDisplayName(user)}</CardTitle>
+                      </div>
+                    </div>
+                    <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
+                      {user.role === 'admin' ? '🔑' : '👤'}
+                    </Badge>
+                  </div>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground truncate">{user.email}</p>
-                  <p className="text-sm text-muted-foreground">Inscrit le: {new Date(user.createdAt).toLocaleDateString()}</p>
+                <Separator />
+                <CardContent className="pt-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Mail className="h-4 w-4" />
+                      <span className="truncate">{user.email}</span>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      📅 Inscrit le {new Date(user.createdAt).toLocaleDateString()}
+                    </div>
+                  </div>
                 </CardContent>
                 <CardFooter className="flex justify-end space-x-2">
                   {deleteConfirm === user.id ? (
