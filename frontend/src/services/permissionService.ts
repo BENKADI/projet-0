@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getToken } from './authService';
+import { API_BASE_URL } from '@/config/api';
 // Définition des types
 export interface Permission {
   id: number;
@@ -7,7 +8,7 @@ export interface Permission {
   description?: string;
 }
 
-const API_URL = 'http://localhost:3000';
+const API_URL = API_BASE_URL;
 
 export interface PermissionCreateInput {
   name: string;

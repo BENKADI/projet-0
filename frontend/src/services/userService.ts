@@ -1,8 +1,9 @@
 import axios from 'axios';
 import { getToken } from './authService';
 import { Permission } from './permissionService';
+import { API_BASE_URL } from '@/config/api';
 
-const API_URL = 'http://localhost:3000';
+const API_URL = API_BASE_URL;
 
 // Types pour les utilisateurs
 export interface User {
