@@ -1,0 +1,57 @@
+# ==========================================
+# Stage 1: Build
+# ==========================================
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm ci && \
+    npm cache clean --force
+
+# Copy source code
+COPY . .
+
+# Build arguments
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
+
+# Build application
+RUN npm run build
+
+# ==========================================
+# Stage 2: Production with Nginx
+# ==========================================
+FROM nginx:alpine AS production
+
+# Install curl for healthcheck
+RUN apk add --no-cache curl
+
+# Copy custom nginx configuration
+COPY nginx.prod.conf /etc/nginx/nginx.conf
+
+# Copy built application from builder
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Create nginx user if not exists
+RUN addgroup -g 101 -S nginx 2>/dev/null || true && \
+    adduser -S -D -H -u 101 -h /var/cache/nginx -s /sbin/nologin -G nginx -g nginx nginx 2>/dev/null || true
+
+# Set proper permissions
+RUN chown -R nginx:nginx /usr/share/nginx/html && \
+    chown -R nginx:nginx /var/cache/nginx && \
+    chown -R nginx:nginx /var/log/nginx && \
+    chmod -R 755 /usr/share/nginx/html
+
+# Expose ports
+EXPOSE 80 443
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
+  CMD curl --fail http://localhost/ || exit 1
+
+# Start Nginx
+CMD ["nginx", "-g", "daemon off;"]

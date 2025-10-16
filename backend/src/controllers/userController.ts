@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 
 class UserController {
   // Obtenir tous les utilisateurs
-  async getAllUsers(req: Request, res: Response): Promise<void> {
+  async getAllUsers(_req: Request, res: Response): Promise<void> {
     try {
       const users = await prisma.user.findMany({
         select: {

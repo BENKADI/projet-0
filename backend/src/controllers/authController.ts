@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { PrismaClient } from '../../generated/prisma';
 import { hashPassword, comparePasswords, generateToken } from '../utils/authUtils';
 import { UserInput } from '../types';
+import { AuthUser } from '../types/auth.types';
 import passport from '../config/passport';
 
 const prisma = new PrismaClient();
@@ -159,7 +160,33 @@ export const googleCallback = (req: Request, res: Response, next: NextFunction) 
 };
 
 // Google OAuth - Gestion de l'échec d'authentification
-export const googleAuthFailure = (req: Request, res: Response): void => {
+export const googleAuthFailure = (_req: Request, res: Response): void => {
   const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
   res.redirect(`${frontendUrl}/login?error=authentication_failed`);
+};
+
+// Get current user information
+export const getCurrentUser = async (req: Request, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: 'Utilisateur non authentifié.' });
+      return;
+    }
+
+    const user = req.user as AuthUser;
+
+    // Retourner les infos de l'utilisateur (déjà chargées par le middleware authenticate)
+    res.status(200).json({
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        firstName: user.firstName,
+        lastName: user.lastName,
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching current user:', error);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
 };

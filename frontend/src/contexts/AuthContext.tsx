@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
-import { login as apiLogin, logout as apiLogout, getCurrentUser } from '../services/authService';
+import { login as apiLogin, logout as apiLogout, getCurrentUser, setTokenFromOAuth } from '../services/authService';
 
 interface User {
   id: string | number;
@@ -12,6 +12,7 @@ interface AuthContextProps {
   user: User | null;
   login: (email: string, password: string) => Promise<any>;
   logout: () => void;
+  setToken: (token: string) => Promise<void>;
   loading: boolean;
 }
 
@@ -21,6 +22,7 @@ export const AuthContext = createContext<AuthContextProps>({
   user: null,
   login: async () => ({}),
   logout: () => {},
+  setToken: async () => {},
   loading: true,
 });
 
@@ -59,11 +61,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setUser(null);
   };
 
+  // Set token from OAuth (Google, etc.)
+  const setToken = async (token: string) => {
+    try {
+      const response = await setTokenFromOAuth(token);
+      setUser(response.user);
+    } catch (error) {
+      console.error('Error setting token:', error);
+      throw error;
+    }
+  };
+
   const value = {
     isAuthenticated: !!user,
     user,
     login,
     logout,
+    setToken,
     loading,
   };
 

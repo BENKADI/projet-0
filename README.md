@@ -7,6 +7,23 @@ Une base solide et prête pour la production avec backend Node.js/Express, front
 [![CI/CD Pipeline](https://github.com/BENKADI/projet-0/actions/workflows/ci.yml/badge.svg)](https://github.com/BENKADI/projet-0/actions/workflows/ci.yml)
 [![Code Quality](https://github.com/BENKADI/projet-0/actions/workflows/code-quality.yml/badge.svg)](https://github.com/BENKADI/projet-0/actions/workflows/code-quality.yml)
 
+## 🎉 Nouveautés - Octobre 2025
+
+**Améliorations majeures ajoutées!** Infrastructure de tests, validation des variables d'environnement, configuration Docker production optimisée et plus encore.
+
+📖 **Documentation des améliorations:**
+- 🚀 [Quick Start](./QUICKSTART_IMPROVEMENTS.md) - Démarrage rapide (3 minutes)
+- 📊 [Analyse de la Stack](./STACK_ANALYSIS.md) - Analyse détaillée et améliorations
+- 📚 [Guide d'Installation](./IMPROVEMENTS_GUIDE.md) - Instructions complètes
+- 📋 [Changelog](./CHANGELOG_IMPROVEMENTS.md) - Liste de tous les changements
+
+**Nouveautés principales:**
+- ✅ Tests unitaires et d'intégration (Jest + Vitest)
+- ✅ Validation des variables d'environnement (Zod)
+- ✅ Configuration Docker production multi-stage
+- ✅ TypeScript configuration optimisée
+- ✅ Documentation enrichie
+
 ## ✨ Fonctionnalités
 
 ### Backend
@@ -15,11 +32,13 @@ Une base solide et prête pour la production avec backend Node.js/Express, front
 - ✅ **Authentification JWT** complète
 - ✅ **Système de permissions** granulaire
 - ✅ **Validation des données** avec Zod
+- ✅ **Validation des variables d'environnement** 🆕
 - ✅ **Documentation API** avec Swagger/OpenAPI
 - ✅ **Logging professionnel** avec Winston
 - ✅ **Sécurité renforcée** (Helmet, Rate Limiting)
 - ✅ **Error handling** centralisé
 - ✅ **Health checks** (liveness, readiness)
+- ✅ **Tests unitaires** avec Jest 🆕
 
 ### Frontend
 - ✅ **React 19** avec TypeScript
@@ -30,13 +49,16 @@ Une base solide et prête pour la production avec backend Node.js/Express, front
 - ✅ **Context API** pour la gestion d'état
 - ✅ **Axios** pour les requêtes API
 - ✅ **Theme switching** (light/dark)
+- ✅ **Tests composants** avec Vitest + React Testing Library 🆕
 
 ### DevOps
 - ✅ **Docker & Docker Compose** prêts
+- ✅ **Docker Production** multi-stage optimisé 🆕
 - ✅ **GitHub Actions** CI/CD
 - ✅ **Prettier & ESLint** configurés
 - ✅ **Scripts utilitaires** (Makefile, PowerShell)
-- ✅ **Configuration d'environnement** (.env.example)
+- ✅ **Configuration d'environnement** (.env.example enrichi) 🆕
+- ✅ **TypeScript strict** configuration optimale 🆕
 
 ## 📁 Structure du projet
 

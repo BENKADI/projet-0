@@ -5,7 +5,7 @@ export class PermissionController {
   /**
    * Récupérer toutes les permissions
    */
-  async getAllPermissions(req: Request, res: Response): Promise<void> {
+  async getAllPermissions(_req: Request, res: Response): Promise<void> {
     try {
       const permissions = await permissionService.getAllPermissions();
       res.status(200).json(permissions);
@@ -19,7 +19,7 @@ export class PermissionController {
    */
   async getPermissionById(req: Request, res: Response): Promise<void> {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(req.params.id!);
       const permission = await permissionService.getPermissionById(id);
       
       if (!permission) {
@@ -59,7 +59,7 @@ export class PermissionController {
    */
   async updatePermission(req: Request, res: Response): Promise<void> {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(req.params.id!);
       const { name, description } = req.body;
       
       // Vérifier si la permission existe
@@ -90,7 +90,7 @@ export class PermissionController {
    */
   async deletePermission(req: Request, res: Response): Promise<void> {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(req.params.id!);
       
       // Vérifier si la permission existe
       const existingPermission = await permissionService.getPermissionById(id);
@@ -111,8 +111,8 @@ export class PermissionController {
    */
   async assignPermissionToUser(req: Request, res: Response): Promise<void> {
     try {
-      const userId = parseInt(req.params.userId);
-      const permissionId = parseInt(req.params.permissionId);
+      const userId = parseInt(req.params.userId!);
+      const permissionId = parseInt(req.params.permissionId!);
       
       const result = await permissionService.assignPermissionToUser(userId, permissionId);
       res.status(200).json(result);
@@ -126,8 +126,8 @@ export class PermissionController {
    */
   async removePermissionFromUser(req: Request, res: Response): Promise<void> {
     try {
-      const userId = parseInt(req.params.userId);
-      const permissionId = parseInt(req.params.permissionId);
+      const userId = parseInt(req.params.userId!);
+      const permissionId = parseInt(req.params.permissionId!);
       
       const result = await permissionService.removePermissionFromUser(userId, permissionId);
       res.status(200).json(result);
@@ -141,7 +141,7 @@ export class PermissionController {
    */
   async getUserPermissions(req: Request, res: Response): Promise<void> {
     try {
-      const userId = parseInt(req.params.userId);
+      const userId = parseInt(req.params.userId!);
       const permissions = await permissionService.getUserPermissions(userId);
       res.status(200).json(permissions);
     } catch (error: any) {

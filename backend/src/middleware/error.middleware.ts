@@ -20,16 +20,14 @@ export const errorHandler = (
   err: Error | AppError,
   req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ) => {
   let statusCode = 500;
   let message = 'Internal Server Error';
-  let isOperational = false;
 
   if (err instanceof AppError) {
     statusCode = err.statusCode;
     message = err.message;
-    isOperational = err.isOperational;
   } else if (err.name === 'ValidationError') {
     statusCode = 400;
     message = err.message;
@@ -74,7 +72,7 @@ export const errorHandler = (
 // 404 handler
 export const notFoundHandler = (
   req: Request,
-  res: Response,
+  _res: Response,
   next: NextFunction
 ) => {
   const error = new AppError(`Route not found: ${req.originalUrl}`, 404);

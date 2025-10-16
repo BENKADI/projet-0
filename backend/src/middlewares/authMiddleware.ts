@@ -15,6 +15,10 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
 
     const token = authHeader.split(' ')[1];
     
+    if (!token) {
+      return res.status(401).json({ message: 'Access denied. No token provided.' });
+    }
+    
     // Verify the token
     const decoded = verifyToken(token);
     if (!decoded) {
@@ -24,7 +28,14 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
     // Find the user by id
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
-      select: { id: true, email: true }
+      select: { 
+        id: true, 
+        email: true,
+        role: true,
+        firstName: true,
+        lastName: true,
+        permissions: true
+      }
     });
 
     if (!user) {
@@ -32,8 +43,16 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
     }
 
     // Attach the user to the request object
-    req.user = user;
+    req.user = {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      firstName: user.firstName || null,
+      lastName: user.lastName || null,
+      permissions: user.permissions
+    };
     next();
+    return;
   } catch (error) {
     return res.status(500).json({ message: 'Internal server error.' });
   }

@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   Users,
   ShieldCheck,
+  Settings,
   LogOut,
   PanelLeftClose,
   PanelRightClose,
@@ -105,6 +106,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggleCollapse
           )}
         </ul>
       </nav>
+
+      {/* Paramètres - Toujours en bas avant la déconnexion */}
+      <div className="p-2 border-t border-border">
+        <Link to="/settings" className={linkClasses('/settings')}>
+          <Settings className={cn(iconClasses, !isCollapsed && 'mr-3')} />
+          {!isCollapsed && <span>Paramètres</span>}
+        </Link>
+      </div>
 
       {/* Pied de page avec bouton de déconnexion */}
       <div className="p-4 border-t border-border">

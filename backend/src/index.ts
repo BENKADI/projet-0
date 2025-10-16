@@ -3,7 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import swaggerUi from 'swagger-ui-express';
 import passport from './config/passport';
-import { authRoutes, permissionRoutes, userRoutes } from './routes';
+import { authRoutes, permissionRoutes, userRoutes, settingsRoutes } from './routes';
 import healthRoutes from './routes/health.routes';
 import { swaggerSpec } from './config/swagger';
 import { errorHandler, notFoundHandler } from './middleware/error.middleware';
@@ -47,7 +47,7 @@ app.use(requestLogger);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Welcome route
-app.get('/', (req, res) => {
+app.get('/', (_req, res) => {
   res.json({
     message: 'Welcome to Projet-0 API',
     version: '1.0.0',
@@ -63,6 +63,7 @@ app.use('/', healthRoutes);
 app.use('/auth', authLimiter, authRoutes);
 app.use('/permissions', permissionRoutes);
 app.use('/users', userRoutes);
+app.use('/settings', settingsRoutes);
 
 // 404 handler
 app.use(notFoundHandler);

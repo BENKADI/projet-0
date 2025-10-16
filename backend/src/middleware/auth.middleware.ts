@@ -5,12 +5,10 @@ import { AuthUser, JwtPayload } from '../types/auth.types';
 
 const prisma = new PrismaClient();
 
-// Étendre l'interface Request pour inclure l'utilisateur
+// Étendre l'interface User de Passport pour inclure nos champs personnalisés
 declare global {
   namespace Express {
-    interface Request {
-      user?: AuthUser;
-    }
+    interface User extends AuthUser {}
   }
 }
 
@@ -27,27 +25,50 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
     // Extraire le token
     const token = authHeader.split(' ')[1];
     
+    if (!token) {
+      res.status(401).json({ message: 'Accès non autorisé. Token manquant.' });
+      return;
+    }
+    
     // Vérifier le token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as JwtPayload;
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      res.status(500).json({ message: 'Configuration serveur incorrecte.' });
+      return;
+    }
+    
+    const decoded = jwt.verify(token, jwtSecret) as JwtPayload;
     
     // Récupérer l'utilisateur avec ses permissions
-    const user = await prisma.user.findUnique({
+    const dbUser = await prisma.user.findUnique({
       where: { id: decoded.userId },
       include: { permissions: true }
-    }) as AuthUser | null;
+    });
 
-    if (!user) {
+    if (!dbUser) {
       res.status(401).json({ message: 'Utilisateur non trouvé.' });
       return;
     }
+    
+    // Transformer en AuthUser
+    const user: AuthUser = {
+      id: dbUser.id,
+      email: dbUser.email,
+      role: dbUser.role,
+      firstName: dbUser.firstName,
+      lastName: dbUser.lastName,
+      permissions: dbUser.permissions
+    };
 
     // Ajouter l'utilisateur à l'objet request pour un accès ultérieur
     req.user = user;
     next();
+    return;
     
   } catch (error) {
     console.error('Erreur d\'authentification:', error);
     res.status(401).json({ message: 'Token invalide ou expiré.' });
+    return;
   }
 };
 

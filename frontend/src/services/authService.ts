@@ -71,10 +71,40 @@ export const getToken = (): string | null => {
   return user ? user.token : null;
 };
 
+/**
+ * Set token from Google OAuth and fetch user data
+ */
+export const setTokenFromOAuth = async (token: string): Promise<AuthResponse> => {
+  try {
+    // Récupérer les données utilisateur depuis l'API avec le token
+    const response = await axios.get(`${API_URL}/me`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    
+    const userData = response.data.user;
+    const authData = { 
+      token, 
+      user: userData, 
+      message: 'OAuth login successful' 
+    };
+    
+    // Stocker les données complètes
+    localStorage.setItem('user', JSON.stringify(authData));
+    
+    return authData;
+  } catch (error) {
+    console.error('Error setting OAuth token:', error);
+    // En cas d'erreur, supprimer tout token invalide
+    localStorage.removeItem('user');
+    throw error;
+  }
+};
+
 export default {
   register,
   login,
   logout,
   getCurrentUser,
   getToken,
+  setTokenFromOAuth,
 };

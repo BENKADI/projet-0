@@ -1,5 +1,6 @@
 import express from 'express';
-import { register, login, googleAuth, googleCallback, googleAuthFailure } from '../controllers/authController';
+import { register, login, googleAuth, googleCallback, googleAuthFailure, getCurrentUser } from '../controllers/authController';
+import { authenticate } from '../middleware/auth.middleware';
 
 const router = express.Router();
 
@@ -11,5 +12,8 @@ router.post('/login', login);
 router.get('/google', googleAuth);
 router.get('/google/callback', googleCallback);
 router.get('/google/failure', googleAuthFailure);
+
+// Get current user info (protected)
+router.get('/me', authenticate, getCurrentUser);
 
 export default router;

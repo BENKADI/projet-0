@@ -37,4 +37,64 @@ model Permission {
   updatedAt   DateTime  @updatedAt
 }
 
+// Paramètres de l'application
+model AppSettings {
+  id                    Int       @id @default(autoincrement())
+  // Paramètres généraux
+  appName               String    @default("Projet-0")
+  appLanguage           String    @default("fr")
+  appCurrency           String    @default("EUR")
+  appLogo               String?
+  appDescription        String?
+  
+  // Apparence
+  theme                 String    @default("light") // "light", "dark", "auto"
+  primaryColor          String    @default("#3b82f6")
+  accentColor           String    @default("#8b5cf6")
+  
+  // Notifications
+  emailNotifications    Boolean   @default(true)
+  browserNotifications  Boolean   @default(true)
+  notificationSound     Boolean   @default(true)
+  
+  // Sécurité
+  twoFactorEnabled      Boolean   @default(false)
+  sessionTimeout        Int       @default(3600) // en secondes
+  passwordPolicy        String    @default("medium") // "weak", "medium", "strong"
+  
+  // Système
+  maintenanceMode       Boolean   @default(false)
+  allowRegistration     Boolean   @default(true)
+  maxUploadSize         Int       @default(10) // en MB
+  
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  
+  @@map("app_settings")
+}
+
+// Préférences utilisateur
+model UserPreferences {
+  id                    Int       @id @default(autoincrement())
+  userId                Int       @unique
+  
+  // Apparence personnelle
+  theme                 String    @default("auto")
+  language              String    @default("fr")
+  
+  // Notifications personnelles
+  emailNotifications    Boolean   @default(true)
+  pushNotifications     Boolean   @default(true)
+  emailDigest           String    @default("daily") // "realtime", "daily", "weekly", "never"
+  
+  // Interface
+  sidebarCollapsed      Boolean   @default(false)
+  compactMode           Boolean   @default(false)
+  
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  
+  @@map("user_preferences")
+}
+
 // Fin du schéma
