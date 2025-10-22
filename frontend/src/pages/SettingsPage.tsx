@@ -1,21 +1,27 @@
 import { useState } from 'react';
 import { Settings } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
 import GeneralSettings from '../components/settings/GeneralSettings';
+import ProfileSettings from '../components/settings/ProfileSettings';
 import AppearanceSettings from '../components/settings/AppearanceSettings';
 import NotificationSettings from '../components/settings/NotificationSettings';
 import SecuritySettings from '../components/settings/SecuritySettings';
+import SystemSettings from '../components/settings/SystemSettings';
 
-type TabType = 'general' | 'appearance' | 'notifications' | 'security';
+type TabType = 'general' | 'profile' | 'appearance' | 'notifications' | 'security' | 'system';
 
 const SettingsPage = () => {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('general');
 
   const tabs = [
-    { id: 'general' as TabType, label: 'Général', icon: '🌍' },
-    { id: 'appearance' as TabType, label: 'Apparence', icon: '🎨' },
-    { id: 'notifications' as TabType, label: 'Notifications', icon: '🔔' },
-    { id: 'security' as TabType, label: 'Sécurité', icon: '🔒' },
-  ];
+    { id: 'general' as TabType, label: 'Général', icon: '🌍', adminOnly: false },
+    { id: 'profile' as TabType, label: 'Profil', icon: '👤', adminOnly: false },
+    { id: 'appearance' as TabType, label: 'Apparence', icon: '🎨', adminOnly: false },
+    { id: 'notifications' as TabType, label: 'Notifications', icon: '🔔', adminOnly: false },
+    { id: 'security' as TabType, label: 'Sécurité', icon: '🔒', adminOnly: false },
+    { id: 'system' as TabType, label: 'Système', icon: '💾', adminOnly: true },
+  ].filter(tab => !tab.adminOnly || user?.role === 'admin');
 
   return (
     <div className="p-8">
@@ -54,9 +60,11 @@ const SettingsPage = () => {
           {/* Contenu des tabs */}
           <div className="p-6">
             {activeTab === 'general' && <GeneralSettings />}
+            {activeTab === 'profile' && <ProfileSettings />}
             {activeTab === 'appearance' && <AppearanceSettings />}
             {activeTab === 'notifications' && <NotificationSettings />}
             {activeTab === 'security' && <SecuritySettings />}
+            {activeTab === 'system' && <SystemSettings />}
           </div>
         </div>
 
