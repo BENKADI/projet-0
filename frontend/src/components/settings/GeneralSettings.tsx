@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Save, Globe, DollarSign } from 'lucide-react';
-import axios from 'axios';
+import axios from '../../lib/axios';
 
 interface GeneralSettingsData {
   appName: string;
@@ -27,9 +27,20 @@ export default function GeneralSettings() {
     setLoading(true);
     try {
       const response = await axios.get('/settings/app');
-      setSettings(response.data);
-    } catch (error) {
-      console.error('Erreur lors du chargement des paramètres');
+      // S'assurer qu'aucun champ n'est null (convertir en chaîne vide)
+      setSettings({
+        appName: response.data.appName || '',
+        appLanguage: response.data.appLanguage || 'fr',
+        appCurrency: response.data.appCurrency || 'EUR',
+        appDescription: response.data.appDescription || '',
+      });
+    } catch (error: any) {
+      console.error('Erreur lors du chargement des paramètres:', error);
+      // Si 401, l'intercepteur s'en occupe
+      // Pour les autres erreurs, on utilise les valeurs par défaut
+      if (error.response?.status !== 401) {
+        // Garder les valeurs par défaut
+      }
     } finally {
       setLoading(false);
     }

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { User, Save, Mail, Building } from 'lucide-react';
-import axios from 'axios';
+import axios from '../../lib/axios';
 import { useAuth } from '../../hooks/useAuth';
 
 interface ProfileData {

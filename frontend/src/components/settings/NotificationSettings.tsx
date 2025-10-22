@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Bell, Save } from 'lucide-react';
-import axios from 'axios';
+import axios from '../../lib/axios';
 
 interface NotificationData {
   emailNotifications: boolean;

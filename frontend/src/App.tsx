@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard';
 import Users from './pages/Users';
 import Permissions from './pages/Permissions';
 import SettingsPage from './pages/SettingsPage';
+import TestAuth from './pages/TestAuth';
 
 
 function App() {
@@ -17,6 +18,7 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="/test-auth" element={<TestAuth />} />
           <Route path="/" element={<Navigate to="/login" />} />
           
           {/* Protected routes with Navbar */}

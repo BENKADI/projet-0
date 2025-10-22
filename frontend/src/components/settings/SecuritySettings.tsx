@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Shield, Save, Lock } from 'lucide-react';
-import axios from 'axios';
+import axios from '../../lib/axios';
 
 export default function SecuritySettings() {
   const [passwords, setPasswords] = useState({
