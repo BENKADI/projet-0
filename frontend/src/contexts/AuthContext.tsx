@@ -49,8 +49,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const response = await apiLogin({ email, password });
       setUser(response.user);
       return response;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login error:', error);
+      
+      // Enhanced error logging for debugging
+      if (error.response) {
+        // Server responded with error status
+        console.error('Error response data:', error.response.data);
+        console.error('Error response status:', error.response.status);
+        console.error('Error response headers:', error.response.headers);
+      } else if (error.request) {
+        // Request was made but no response received
+        console.error('Error request:', error.request);
+        console.error('No response received from server. Is the backend running?');
+      } else {
+        // Error in setting up the request
+        console.error('Error message:', error.message);
+      }
+      
       throw error;
     }
   };

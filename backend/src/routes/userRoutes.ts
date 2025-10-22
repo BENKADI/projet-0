@@ -1,11 +1,15 @@
 import express from 'express';
 import userController from '../controllers/userController';
 import { authenticate, isAdmin, hasPermission } from '../middleware/auth.middleware';
+import avatarRoutes from './avatarRoutes';
 
 const router = express.Router();
 
 // Routes protégées - nécessitent une authentification
 router.use(authenticate);
+
+// Routes avatar (accessible à tous les utilisateurs authentifiés)
+router.use('/', avatarRoutes);
 
 // Routes accessibles aux administrateurs uniquement
 router.get('/', isAdmin, userController.getAllUsers);

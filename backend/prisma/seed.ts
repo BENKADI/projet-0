@@ -59,7 +59,7 @@ async function main() {
     const hashedPassword = await hashPassword('Admin123!')
     
     // Créer l'administrateur avec toutes les permissions
-    const newAdmin = await prisma.user.create({
+    await prisma.user.create({
       data: {
         email: 'admin@projet0.com',
         password: hashedPassword,

@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axiosInstance from '@/config/axios';
 import { API_ENDPOINTS } from '@/config/api';
 
 const API_URL = API_ENDPOINTS.AUTH;
@@ -23,7 +23,7 @@ interface AuthResponse {
  * Register a new user
  */
 export const register = async (data: AuthData): Promise<AuthResponse> => {
-  const response = await axios.post(`${API_URL}/register`, data);
+  const response = await axiosInstance.post(`${API_URL}/register`, data);
   
   if (response.data.token) {
     localStorage.setItem('user', JSON.stringify(response.data));
@@ -36,7 +36,7 @@ export const register = async (data: AuthData): Promise<AuthResponse> => {
  * Login user
  */
 export const login = async (data: AuthData): Promise<AuthResponse> => {
-  const response = await axios.post(`${API_URL}/login`, data);
+  const response = await axiosInstance.post(`${API_URL}/login`, data);
   
   if (response.data.token) {
     localStorage.setItem('user', JSON.stringify(response.data));
@@ -77,7 +77,7 @@ export const getToken = (): string | null => {
 export const setTokenFromOAuth = async (token: string): Promise<AuthResponse> => {
   try {
     // Récupérer les données utilisateur depuis l'API avec le token
-    const response = await axios.get(`${API_URL}/me`, {
+    const response = await axiosInstance.get(`${API_URL}/me`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     

@@ -23,6 +23,7 @@ model User {
   role         String        @default("user") // Valeurs possibles: "user", "admin"
   firstName    String?
   lastName     String?
+  avatarUrl    String?       // URL de la photo de profil
   permissions  Permission[]  
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt

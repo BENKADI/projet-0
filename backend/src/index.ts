@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
 import swaggerUi from 'swagger-ui-express';
 import passport from './config/passport';
 import { authRoutes, permissionRoutes, userRoutes, settingsRoutes } from './routes';
@@ -42,6 +43,9 @@ app.use(passport.initialize());
 
 // Request logging
 app.use(requestLogger);
+
+// Servir les fichiers statiques (avatars)
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // API Documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));

@@ -1,7 +1,10 @@
-import { useState, useEffect } from 'react';
-import { User, Save, Mail, Building } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { User, Save, Mail, Building, Upload, Loader2, X } from 'lucide-react';
+import { toast } from 'sonner';
+import { isAxiosError } from 'axios';
 import axios from '../../lib/axios';
 import { useAuth } from '../../hooks/useAuth';
+import { Avatar, AvatarImage, AvatarFallback } from '../ui/Avatar';
 
 interface ProfileData {
   firstName: string;
@@ -12,12 +15,15 @@ interface ProfileData {
 
 export default function ProfileSettings() {
   const { user } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [profile, setProfile] = useState<ProfileData>({
     firstName: '',
     lastName: '',
     email: '',
     role: '',
   });
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -44,6 +50,83 @@ export default function ProfileSettings() {
     }
   };
 
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleAvatarChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Vérifier le type de fichier
+    if (!file.type.startsWith('image/')) {
+      toast.error('Veuillez sélectionner une image valide.');
+      return;
+    }
+
+    // Vérifier la taille (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('L\'image ne doit pas dépasser 5 MB.');
+      return;
+    }
+
+    // Prévisualisation
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setAvatarPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+
+    // Upload
+    setUploadingAvatar(true);
+    try {
+      const formData = new FormData();
+      formData.append('avatar', file);
+
+      await axios.post('/users/me/avatar', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      toast.success('Photo de profil mise à jour avec succès!');
+      setAvatarPreview(null);
+      // Recharger le profil pour obtenir la nouvelle URL
+      fetchProfile();
+    } catch (error: unknown) {
+      if (isAxiosError(error)) {
+        toast.error(error.response?.data?.message || 'Erreur lors de l\'upload.');
+      } else {
+        toast.error('Erreur lors de l\'upload de la photo.');
+      }
+      setAvatarPreview(null);
+    } finally {
+      setUploadingAvatar(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleDeleteAvatar = async () => {
+    if (!confirm('Voulez-vous vraiment supprimer votre photo de profil ?')) return;
+
+    setUploadingAvatar(true);
+    try {
+      await axios.delete('/users/me/avatar');
+      toast.success('Photo de profil supprimée.');
+      fetchProfile();
+    } catch (error: unknown) {
+      if (isAxiosError(error)) {
+        toast.error(error.response?.data?.message || 'Erreur lors de la suppression.');
+      } else {
+        toast.error('Erreur lors de la suppression.');
+      }
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -52,9 +135,13 @@ export default function ProfileSettings() {
         firstName: profile.firstName,
         lastName: profile.lastName,
       });
-      alert('✅ Profil mis à jour avec succès!');
-    } catch (error) {
-      alert('❌ Erreur lors de la mise à jour du profil');
+      toast.success('Profil mis à jour avec succès!');
+    } catch (error: unknown) {
+      if (isAxiosError(error)) {
+        toast.error(error.response?.data?.message || 'Erreur lors de la mise à jour.');
+      } else {
+        toast.error('Erreur lors de la mise à jour du profil.');
+      }
     } finally {
       setSaving(false);
     }
@@ -72,22 +159,58 @@ export default function ProfileSettings() {
       </div>
 
       <div className="space-y-4">
-        {/* Avatar (placeholder) */}
+        {/* Avatar */}
         <div className="flex items-center gap-4 p-4 border border-gray-300 dark:border-gray-600 rounded-lg">
-          <div className="h-20 w-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
-            {profile.firstName?.[0]?.toUpperCase() || profile.email[0].toUpperCase()}
+          <div className="relative">
+            <Avatar className="h-20 w-20">
+              {avatarPreview ? (
+                <AvatarImage src={avatarPreview} alt="Aperçu" />
+              ) : (user as any)?.avatarUrl ? (
+                <AvatarImage src={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${(user as any).avatarUrl}`} alt="Avatar" />
+              ) : (
+                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-2xl font-bold">
+                  {profile.firstName?.[0]?.toUpperCase() || profile.email[0]?.toUpperCase()}
+                </AvatarFallback>
+              )}
+            </Avatar>
+            {uploadingAvatar && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full">
+                <Loader2 className="h-6 w-6 animate-spin text-white" />
+              </div>
+            )}
           </div>
-          <div>
+          <div className="flex-1">
             <div className="font-medium">Photo de profil</div>
-            <div className="text-sm text-gray-500">
-              Upload de photo à venir
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              JPG, PNG, GIF ou WEBP (max 5 MB)
             </div>
-            <button
-              disabled
-              className="mt-2 text-sm bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded cursor-not-allowed"
-            >
-              Changer la photo
-            </button>
+            <div className="flex gap-2 mt-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarChange}
+                className="hidden"
+              />
+              <button
+                onClick={handleAvatarClick}
+                disabled={uploadingAvatar}
+                className="text-sm bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded disabled:opacity-50 flex items-center gap-1"
+              >
+                <Upload className="h-3 w-3" />
+                Changer la photo
+              </button>
+              {(user as any)?.avatarUrl && (
+                <button
+                  onClick={handleDeleteAvatar}
+                  disabled={uploadingAvatar}
+                  className="text-sm bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded disabled:opacity-50 flex items-center gap-1"
+                >
+                  <X className="h-3 w-3" />
+                  Supprimer
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
