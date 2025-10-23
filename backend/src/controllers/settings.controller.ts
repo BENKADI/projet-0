@@ -11,17 +11,21 @@ export class SettingsController {
    */
   async getAppSettings(_req: Request, res: Response): Promise<void> {
     try {
+      console.log('📥 GET /settings/app - Récupération des paramètres');
       let settings = await prisma.appSettings.findFirst();
       
       // Si aucun paramètre n'existe, créer les paramètres par défaut
       if (!settings) {
+        console.log('⚠️ Aucun paramètre trouvé, création des paramètres par défaut');
         settings = await prisma.appSettings.create({
           data: {}
         });
       }
+      console.log('✅ Paramètres récupérés:', settings.appName);
       
       res.status(200).json(settings);
     } catch (error: any) {
+      console.error('❌ Erreur getAppSettings:', error);
       res.status(500).json({ 
         message: error.message || 'Erreur lors de la récupération des paramètres' 
       });
@@ -33,6 +37,9 @@ export class SettingsController {
    */
   async updateAppSettings(req: Request, res: Response): Promise<void> {
     try {
+      console.log('📝 PUT /settings/app - Mise à jour des paramètres');
+      console.log('Body reçu:', JSON.stringify(req.body, null, 2));
+      
       const {
         appName,
         appLanguage,
@@ -58,6 +65,7 @@ export class SettingsController {
 
       if (!settings) {
         // Créer si n'existe pas
+        console.log('⚠️ Création des paramètres car inexistants');
         settings = await prisma.appSettings.create({
           data: {
             appName,
@@ -81,6 +89,7 @@ export class SettingsController {
         });
       } else {
         // Mettre à jour
+        console.log('🔄 Mise à jour des paramètres existants (ID:', settings.id, ')');
         settings = await prisma.appSettings.update({
           where: { id: settings.id },
           data: {
@@ -105,11 +114,13 @@ export class SettingsController {
         });
       }
 
+      console.log('✅ Paramètres enregistrés:', settings.appName);
       res.status(200).json({
         message: 'Paramètres mis à jour avec succès',
         settings,
       });
     } catch (error: any) {
+      console.error('❌ Erreur updateAppSettings:', error);
       res.status(500).json({ 
         message: error.message || 'Erreur lors de la mise à jour des paramètres' 
       });
@@ -224,19 +235,32 @@ export class SettingsController {
    */
   async uploadLogo(req: Request, res: Response): Promise<void> {
     try {
-      // Note: Implémentation basique - à améliorer avec multer pour le vrai upload
-      const { logoUrl } = req.body;
-
-      if (!logoUrl) {
-        res.status(400).json({ message: 'URL du logo requise' });
+      console.log('📤 POST /settings/logo - Upload du logo');
+      // Utiliser multer: fichier disponible via req.file
+      if (!req.file) {
+        console.log('❌ Aucun fichier reçu');
+        res.status(400).json({ message: 'Aucun fichier envoyé' });
         return;
       }
 
-      const settings = await prisma.appSettings.findFirst();
+      const logoUrl = `/uploads/logos/${req.file.filename}`;
+      console.log('📁 Logo sauvegardé:', logoUrl);
 
+      // Récupérer ou créer les paramètres
+      let settings = await prisma.appSettings.findFirst();
       if (!settings) {
-        res.status(404).json({ message: 'Paramètres non trouvés' });
-        return;
+        settings = await prisma.appSettings.create({ data: {} });
+      }
+
+      // Supprimer l'ancien logo si existant
+      if (settings.appLogo) {
+        const relative = settings.appLogo.replace(/^\/+/, '');
+        const path = require('path');
+        const fs = require('fs');
+        const oldPath = path.join(__dirname, '../..', relative);
+        if (fs.existsSync(oldPath)) {
+          try { fs.unlinkSync(oldPath); } catch {}
+        }
       }
 
       const updatedSettings = await prisma.appSettings.update({
@@ -244,11 +268,13 @@ export class SettingsController {
         data: { appLogo: logoUrl },
       });
 
+      console.log('✅ Logo mis à jour avec succès');
       res.status(200).json({
         message: 'Logo mis à jour avec succès',
         logoUrl: updatedSettings.appLogo,
       });
     } catch (error: any) {
+      console.error('❌ Erreur uploadLogo:', error);
       res.status(500).json({ 
         message: error.message || 'Erreur lors de l\'upload du logo' 
       });

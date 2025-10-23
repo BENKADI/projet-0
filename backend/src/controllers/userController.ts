@@ -5,6 +5,80 @@ import { hashPassword } from '../utils/authUtils';
 const prisma = new PrismaClient();
 
 class UserController {
+  // Récupérer le profil de l'utilisateur connecté
+  async getMe(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        res.status(401).json({ message: 'Utilisateur non authentifié' });
+        return;
+      }
+
+      const me = await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          avatarUrl: true,
+          provider: true,
+          role: true,
+          createdAt: true,
+          updatedAt: true,
+        }
+      });
+
+      if (!me) {
+        res.status(404).json({ message: 'Utilisateur non trouvé' });
+        return;
+      }
+
+      res.status(200).json(me);
+      return;
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || 'Erreur lors de la récupération du profil' });
+      return;
+    }
+  }
+
+  // Mettre à jour le profil de l'utilisateur connecté
+  async updateMe(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        res.status(401).json({ message: 'Utilisateur non authentifié' });
+        return;
+      }
+
+      const { firstName, lastName } = req.body as { firstName?: string; lastName?: string };
+
+      const updated = await prisma.user.update({
+        where: { id: userId },
+        data: {
+          ...(firstName !== undefined && { firstName }),
+          ...(lastName !== undefined && { lastName }),
+        },
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          avatarUrl: true,
+          provider: true,
+          role: true,
+          createdAt: true,
+          updatedAt: true,
+        }
+      });
+
+      res.status(200).json(updated);
+      return;
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || 'Erreur lors de la mise à jour du profil' });
+      return;
+    }
+  }
   // Obtenir tous les utilisateurs
   async getAllUsers(_req: Request, res: Response): Promise<void> {
     try {

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import settingsController from '../controllers/settings.controller';
 import { authenticate, isAdmin } from '../middleware/auth.middleware';
+import { uploadLogo } from '../middleware/upload.middleware';
 
 const router = Router();
 
@@ -46,7 +47,7 @@ router.put('/app', authenticate, isAdmin, settingsController.updateAppSettings);
  *       200:
  *         description: Logo uploadé avec succès
  */
-router.post('/logo', authenticate, isAdmin, settingsController.uploadLogo);
+router.post('/logo', authenticate, isAdmin, uploadLogo.single('logo'), settingsController.uploadLogo);
 
 // ==================== ROUTES PRÉFÉRENCES UTILISATEUR ====================
 

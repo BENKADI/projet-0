@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Shield, Save, Lock } from 'lucide-react';
 import axios from '../../lib/axios';
+import { toast } from 'sonner';
 
 export default function SecuritySettings() {
   const [passwords, setPasswords] = useState({
@@ -9,15 +10,58 @@ export default function SecuritySettings() {
     confirmPassword: '',
   });
   const [saving, setSaving] = useState(false);
+  const [policy, setPolicy] = useState<'weak' | 'medium' | 'strong'>('medium');
+  const [loading, setLoading] = useState(true);
+
+  // Charger la politique de mot de passe
+  useEffect(() => {
+    (async () => {
+      try {
+        const resp = await axios.get('/settings/app');
+        if (resp.data?.passwordPolicy) {
+          setPolicy(resp.data.passwordPolicy as 'weak' | 'medium' | 'strong');
+        }
+      } catch {
+        // garder la valeur par défaut
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const validateByPolicy = (pwd: string): string | null => {
+    if (policy === 'weak') {
+      if (pwd.length < 6) return 'Au moins 6 caractères requis.';
+      return null;
+    }
+    if (policy === 'medium') {
+      const hasLen = pwd.length >= 8;
+      const hasLetter = /[A-Za-z]/.test(pwd);
+      const hasDigit = /\d/.test(pwd);
+      if (!hasLen) return 'Au moins 8 caractères requis.';
+      if (!(hasLetter && hasDigit)) return 'Doit contenir des lettres et des chiffres.';
+      return null;
+    }
+    // strong
+    const hasLen = pwd.length >= 12;
+    const hasLower = /[a-z]/.test(pwd);
+    const hasUpper = /[A-Z]/.test(pwd);
+    const hasDigit = /\d/.test(pwd);
+    const hasSymbol = /[^A-Za-z0-9]/.test(pwd);
+    if (!hasLen) return 'Au moins 12 caractères requis.';
+    if (!(hasLower && hasUpper && hasDigit && hasSymbol)) return 'Doit contenir minuscule, majuscule, chiffre et symbole.';
+    return null;
+  };
 
   const handleChangePassword = async () => {
     if (passwords.newPassword !== passwords.confirmPassword) {
-      alert('❌ Les mots de passe ne correspondent pas');
+      toast.error('Les mots de passe ne correspondent pas');
       return;
     }
 
-    if (passwords.newPassword.length < 8) {
-      alert('❌ Le mot de passe doit contenir au moins 8 caractères');
+    const policyError = validateByPolicy(passwords.newPassword);
+    if (policyError) {
+      toast.error(policyError);
       return;
     }
 
@@ -28,10 +72,10 @@ export default function SecuritySettings() {
         currentPassword: passwords.currentPassword,
         newPassword: passwords.newPassword,
       });
-      alert('✅ Mot de passe modifié avec succès!');
+      toast.success('Mot de passe modifié avec succès');
       setPasswords({ currentPassword: '', newPassword: '', confirmPassword: '' });
     } catch (error: any) {
-      alert('❌ ' + (error.response?.data?.message || 'Erreur lors du changement'));
+      toast.error(error.response?.data?.message || 'Erreur lors du changement');
     } finally {
       setSaving(false);
     }
@@ -67,6 +111,7 @@ export default function SecuritySettings() {
                 }
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
                 placeholder="••••••••"
+                disabled={saving || loading}
               />
             </div>
 
@@ -82,9 +127,13 @@ export default function SecuritySettings() {
                 }
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
                 placeholder="••••••••"
+                disabled={saving || loading}
               />
               <p className="text-xs text-gray-500 mt-1">
-                Minimum 8 caractères, avec majuscules, minuscules et chiffres
+                Politique actuelle: <strong>{policy}</strong>.{' '}
+                {policy === 'weak' && 'Min 6 caractères.'}
+                {policy === 'medium' && ' Min 8 caractères, lettres et chiffres.'}
+                {policy === 'strong' && ' Min 12, minuscule, majuscule, chiffre et symbole.'}
               </p>
             </div>
 
@@ -100,12 +149,20 @@ export default function SecuritySettings() {
                 }
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
                 placeholder="••••••••"
+                disabled={saving || loading}
               />
             </div>
 
             <button
               onClick={handleChangePassword}
-              disabled={saving || !passwords.currentPassword || !passwords.newPassword}
+              disabled={
+                saving ||
+                loading ||
+                !passwords.currentPassword ||
+                !passwords.newPassword ||
+                validateByPolicy(passwords.newPassword) !== null ||
+                passwords.newPassword !== passwords.confirmPassword
+              }
               className="w-full bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 disabled:opacity-50"
             >
               <Save className="h-4 w-4" />

@@ -1,5 +1,5 @@
 import express from 'express';
-import { register, login, googleAuth, googleCallback, googleAuthFailure, getCurrentUser } from '../controllers/authController';
+import { register, login, googleAuth, googleCallback, googleAuthFailure, getCurrentUser, changePassword } from '../controllers/authController';
 import { authenticate } from '../middleware/auth.middleware';
 
 const router = express.Router();
@@ -7,6 +7,7 @@ const router = express.Router();
 // Auth routes traditionnelles
 router.post('/register', register);
 router.post('/login', login);
+router.put('/change-password', authenticate, changePassword);
 
 // Routes Google OAuth
 router.get('/google', googleAuth);

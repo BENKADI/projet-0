@@ -31,7 +31,7 @@ export const helmetConfig = helmet({
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       scriptSrc: ["'self'"],
-      imgSrc: ["'self'", 'data:', 'https:'],
+      imgSrc: ["'self'", 'data:', 'https:', 'http:', 'http://localhost:3001', 'http://localhost:3000'],
     },
   },
   hsts: {
@@ -39,4 +39,5 @@ export const helmetConfig = helmet({
     includeSubDomains: true,
     preload: true,
   },
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
 });

@@ -11,6 +11,10 @@ router.use(authenticate);
 // Routes avatar (accessible à tous les utilisateurs authentifiés)
 router.use('/', avatarRoutes);
 
+// Profil de l'utilisateur connecté
+router.get('/me', userController.getMe);
+router.put('/me', userController.updateMe);
+
 // Routes accessibles aux administrateurs uniquement
 router.get('/', isAdmin, userController.getAllUsers);
 router.post('/', isAdmin, userController.createUser);

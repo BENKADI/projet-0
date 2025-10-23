@@ -11,10 +11,13 @@ interface ProfileData {
   lastName: string;
   email: string;
   role: string;
+  avatarUrl?: string | null;
+  provider?: string;
+  createdAt?: string;
 }
 
 export default function ProfileSettings() {
-  const { user } = useAuth();
+  const { refreshUser } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [profile, setProfile] = useState<ProfileData>({
     firstName: '',
@@ -34,16 +37,19 @@ export default function ProfileSettings() {
   const fetchProfile = async () => {
     setLoading(true);
     try {
-      // Récupérer les infos depuis le user connecté
-      if (user) {
-        setProfile({
-          firstName: user.firstName || '',
-          lastName: user.lastName || '',
-          email: user.email,
-          role: user.role || 'user',
-        });
-      }
-    } catch (error) {
+      // Charger depuis l'API pour obtenir les dernières infos (y compris avatar)
+      const response = await axios.get('/users/me');
+      const me = response.data;
+      setProfile({
+        firstName: me.firstName || '',
+        lastName: me.lastName || '',
+        email: me.email,
+        role: me.role || 'user',
+        avatarUrl: me.avatarUrl || null,
+        provider: me.provider,
+        createdAt: me.createdAt,
+      });
+    } catch {
       console.error('Erreur lors du chargement du profil');
     } finally {
       setLoading(false);
@@ -83,16 +89,16 @@ export default function ProfileSettings() {
       const formData = new FormData();
       formData.append('avatar', file);
 
-      await axios.post('/users/me/avatar', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      const { data } = await axios.post('/users/me/avatar', formData);
 
       toast.success('Photo de profil mise à jour avec succès!');
       setAvatarPreview(null);
+      if (data?.user?.avatarUrl) {
+        setProfile((prev) => ({ ...prev, avatarUrl: data.user.avatarUrl }));
+      }
       // Recharger le profil pour obtenir la nouvelle URL
       fetchProfile();
+      await refreshUser();
     } catch (error: unknown) {
       if (isAxiosError(error)) {
         toast.error(error.response?.data?.message || 'Erreur lors de l\'upload.');
@@ -115,7 +121,9 @@ export default function ProfileSettings() {
     try {
       await axios.delete('/users/me/avatar');
       toast.success('Photo de profil supprimée.');
+      setProfile((prev) => ({ ...prev, avatarUrl: null }));
       fetchProfile();
+      await refreshUser();
     } catch (error: unknown) {
       if (isAxiosError(error)) {
         toast.error(error.response?.data?.message || 'Erreur lors de la suppression.');
@@ -136,6 +144,7 @@ export default function ProfileSettings() {
         lastName: profile.lastName,
       });
       toast.success('Profil mis à jour avec succès!');
+      await refreshUser();
     } catch (error: unknown) {
       if (isAxiosError(error)) {
         toast.error(error.response?.data?.message || 'Erreur lors de la mise à jour.');
@@ -165,8 +174,8 @@ export default function ProfileSettings() {
             <Avatar className="h-20 w-20">
               {avatarPreview ? (
                 <AvatarImage src={avatarPreview} alt="Aperçu" />
-              ) : (user as any)?.avatarUrl ? (
-                <AvatarImage src={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${(user as any).avatarUrl}`} alt="Avatar" />
+              ) : profile.avatarUrl ? (
+                <AvatarImage src={`${(import.meta.env.VITE_API_URL || 'http://localhost:3000').replace(/\/api\/?$/, '')}${profile.avatarUrl}`} alt="Avatar" />
               ) : (
                 <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-2xl font-bold">
                   {profile.firstName?.[0]?.toUpperCase() || profile.email[0]?.toUpperCase()}
@@ -200,7 +209,7 @@ export default function ProfileSettings() {
                 <Upload className="h-3 w-3" />
                 Changer la photo
               </button>
-              {(user as any)?.avatarUrl && (
+              {profile.avatarUrl && (
                 <button
                   onClick={handleDeleteAvatar}
                   disabled={uploadingAvatar}
@@ -281,10 +290,10 @@ export default function ProfileSettings() {
           <h4 className="font-medium mb-2">Informations du compte</h4>
           <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
             <div>
-              <span className="font-medium">Méthode de connexion:</span> {user?.provider || 'local'}
+              <span className="font-medium">Méthode de connexion:</span> {profile.provider || 'local'}
             </div>
             <div>
-              <span className="font-medium">Compte créé:</span> {new Date(user?.createdAt || Date.now()).toLocaleDateString('fr-FR')}
+              <span className="font-medium">Compte créé:</span> {new Date(profile.createdAt || Date.now()).toLocaleDateString('fr-FR')}
             </div>
           </div>
         </div>

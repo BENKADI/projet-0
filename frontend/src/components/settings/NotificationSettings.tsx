@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Bell, Save } from 'lucide-react';
 import axios from '../../lib/axios';
+import { toast } from 'sonner';
 
 interface NotificationData {
   emailNotifications: boolean;
@@ -15,21 +16,26 @@ export default function NotificationSettings() {
     emailDigest: 'daily',
   });
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchSettings();
   }, []);
 
   const fetchSettings = async () => {
+    setLoading(true);
     try {
       const response = await axios.get('/settings/preferences');
       setSettings({
-        emailNotifications: response.data.emailNotifications,
-        pushNotifications: response.data.pushNotifications,
-        emailDigest: response.data.emailDigest,
+        emailNotifications: response.data?.emailNotifications ?? true,
+        pushNotifications: response.data?.pushNotifications ?? true,
+        emailDigest: response.data?.emailDigest ?? 'daily',
       });
-    } catch (error) {
+    } catch {
       console.error('Erreur lors du chargement');
+      toast.error('Impossible de charger les préférences');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -37,9 +43,9 @@ export default function NotificationSettings() {
     setSaving(true);
     try {
       await axios.put('/settings/preferences', settings);
-      alert('✅ Préférences de notifications enregistrées!');
-    } catch (error) {
-      alert('❌ Erreur lors de la sauvegarde');
+      toast.success('Préférences enregistrées');
+    } catch {
+      toast.error('Erreur lors de la sauvegarde');
     } finally {
       setSaving(false);
     }
@@ -59,6 +65,13 @@ export default function NotificationSettings() {
       </div>
 
       <div className="space-y-4">
+        {loading && (
+          <div className="space-y-3">
+            <div className="h-6 w-48 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
+            <div className="h-16 w-full animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
+            <div className="h-16 w-full animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
+          </div>
+        )}
         {/* Email Notifications */}
         <div className="flex items-center justify-between p-4 border border-gray-300 dark:border-gray-600 rounded-lg">
           <div>
@@ -72,6 +85,7 @@ export default function NotificationSettings() {
             className={`relative w-12 h-6 rounded-full transition-colors ${
               settings.emailNotifications ? 'bg-blue-500' : 'bg-gray-300 dark:bg-gray-600'
             }`}
+            disabled={saving || loading}
           >
             <div
               className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
@@ -94,6 +108,7 @@ export default function NotificationSettings() {
             className={`relative w-12 h-6 rounded-full transition-colors ${
               settings.pushNotifications ? 'bg-blue-500' : 'bg-gray-300 dark:bg-gray-600'
             }`}
+            disabled={saving || loading}
           >
             <div
               className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
@@ -112,6 +127,7 @@ export default function NotificationSettings() {
             value={settings.emailDigest}
             onChange={(e) => setSettings({ ...settings, emailDigest: e.target.value })}
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+            disabled={saving || loading}
           >
             <option value="realtime">⚡ Temps réel</option>
             <option value="daily">📅 Quotidien</option>
@@ -123,7 +139,7 @@ export default function NotificationSettings() {
         {/* Bouton Enregistrer */}
         <button
           onClick={handleSave}
-          disabled={saving}
+          disabled={saving || loading}
           className="w-full bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 disabled:opacity-50"
         >
           <Save className="h-4 w-4" />

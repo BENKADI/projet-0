@@ -57,6 +57,56 @@ export const register = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+// Change password for authenticated user
+export const changePassword = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const user = req.user as AuthUser | undefined;
+    if (!user) {
+      res.status(401).json({ message: 'Utilisateur non authentifié.' });
+      return;
+    }
+
+    const { currentPassword, newPassword } = req.body as { currentPassword?: string; newPassword?: string };
+
+    if (!currentPassword || !newPassword) {
+      res.status(400).json({ message: 'Mot de passe actuel et nouveau mot de passe requis.' });
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      res.status(400).json({ message: 'Le nouveau mot de passe doit contenir au moins 8 caractères.' });
+      return;
+    }
+
+    const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
+    if (!dbUser) {
+      res.status(404).json({ message: 'Utilisateur non trouvé.' });
+      return;
+    }
+
+    // Accounts created via Google OAuth cannot change password here
+    if (dbUser.provider === 'google' || !dbUser.password) {
+      res.status(400).json({ message: 'Ce compte utilise Google OAuth. Le mot de passe ne peut pas être modifié.' });
+      return;
+    }
+
+    const isCurrentValid = await comparePasswords(currentPassword, dbUser.password);
+    if (!isCurrentValid) {
+      res.status(401).json({ message: 'Mot de passe actuel incorrect.' });
+      return;
+    }
+
+    const newHashed = await hashPassword(newPassword);
+    await prisma.user.update({ where: { id: user.id }, data: { password: newHashed } });
+
+    res.status(200).json({ message: 'Mot de passe modifié avec succès.' });
+    return;
+  } catch (error) {
+    console.error('Error changing password:', error);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+};
+
 // Login user
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {

@@ -4,10 +4,14 @@ import fs from 'fs';
 
 // Dossier de destination
 const UPLOAD_DIR = path.join(__dirname, '../../uploads/avatars');
+const LOGO_DIR = path.join(__dirname, '../../uploads/logos');
 
 // Créer le dossier s'il n'existe pas
 if (!fs.existsSync(UPLOAD_DIR)) {
   fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+}
+if (!fs.existsSync(LOGO_DIR)) {
+  fs.mkdirSync(LOGO_DIR, { recursive: true });
 }
 
 // Configuration du stockage
@@ -20,6 +24,17 @@ const storage = multer.diskStorage({
     const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
     const ext = path.extname(file.originalname);
     cb(null, `avatar-${uniqueSuffix}${ext}`);
+  },
+});
+
+const logoStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => {
+    cb(null, LOGO_DIR);
+  },
+  filename: (_req, file, cb) => {
+    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+    const ext = path.extname(file.originalname);
+    cb(null, `logo-${uniqueSuffix}${ext}`);
   },
 });
 
@@ -44,5 +59,13 @@ export const uploadAvatar = multer({
   fileFilter,
   limits: {
     fileSize: 5 * 1024 * 1024, // 5 MB max
+  },
+});
+
+export const uploadLogo = multer({
+  storage: logoStorage,
+  fileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024,
   },
 });

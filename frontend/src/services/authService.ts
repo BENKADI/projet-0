@@ -1,20 +1,21 @@
-import axiosInstance from '@/config/axios';
+import axiosInstance from '@/lib/axios';
 import { API_ENDPOINTS } from '@/config/api';
 
 const API_URL = API_ENDPOINTS.AUTH;
 
 // Interface for login and registration data
-interface AuthData {
+export interface AuthData {
   email: string;
   password: string;
 }
 
 // Response interface
-interface AuthResponse {
+export interface AuthResponse {
   message: string;
   user: {
     id: number;
     email: string;
+    role?: string;
   };
   token: string;
 }

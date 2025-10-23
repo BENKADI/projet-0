@@ -1,0 +1,237 @@
+{
+  "version": "1.0.0",
+  "timestamp": "2025-10-23T11:49:30.784Z",
+  "data": {
+    "users": [
+      {
+        "id": 1,
+        "email": "admin@projet0.com",
+        "password": "[REDACTED]",
+        "googleId": null,
+        "provider": "local",
+        "role": "admin",
+        "firstName": "Super",
+        "lastName": "Admin",
+        "avatarUrl": "/uploads/avatars/avatar-1761217484843-547395392.png",
+        "createdAt": "2025-10-15T15:25:07.434Z",
+        "updatedAt": "2025-10-23T11:17:49.962Z",
+        "permissions": [
+          {
+            "id": 1,
+            "name": "create:users",
+            "description": "Créer des utilisateurs",
+            "createdAt": "2025-10-15T15:25:07.378Z",
+            "updatedAt": "2025-10-15T15:25:07.378Z"
+          },
+          {
+            "id": 2,
+            "name": "read:users",
+            "description": "Voir les utilisateurs",
+            "createdAt": "2025-10-15T15:25:07.381Z",
+            "updatedAt": "2025-10-15T15:25:07.381Z"
+          },
+          {
+            "id": 3,
+            "name": "update:users",
+            "description": "Modifier les utilisateurs",
+            "createdAt": "2025-10-15T15:25:07.382Z",
+            "updatedAt": "2025-10-15T15:25:07.382Z"
+          },
+          {
+            "id": 4,
+            "name": "delete:users",
+            "description": "Supprimer des utilisateurs",
+            "createdAt": "2025-10-15T15:25:07.383Z",
+            "updatedAt": "2025-10-15T15:25:07.383Z"
+          },
+          {
+            "id": 5,
+            "name": "create:products",
+            "description": "Créer des produits",
+            "createdAt": "2025-10-15T15:25:07.384Z",
+            "updatedAt": "2025-10-15T15:25:07.384Z"
+          },
+          {
+            "id": 6,
+            "name": "read:products",
+            "description": "Voir les produits",
+            "createdAt": "2025-10-15T15:25:07.385Z",
+            "updatedAt": "2025-10-15T15:25:07.385Z"
+          },
+          {
+            "id": 7,
+            "name": "update:products",
+            "description": "Modifier des produits",
+            "createdAt": "2025-10-15T15:25:07.385Z",
+            "updatedAt": "2025-10-15T15:25:07.385Z"
+          },
+          {
+            "id": 8,
+            "name": "delete:products",
+            "description": "Supprimer des produits",
+            "createdAt": "2025-10-15T15:25:07.386Z",
+            "updatedAt": "2025-10-15T15:25:07.386Z"
+          },
+          {
+            "id": 9,
+            "name": "create:orders",
+            "description": "Créer des commandes",
+            "createdAt": "2025-10-15T15:25:07.387Z",
+            "updatedAt": "2025-10-15T15:25:07.387Z"
+          },
+          {
+            "id": 10,
+            "name": "read:orders",
+            "description": "Voir les commandes",
+            "createdAt": "2025-10-15T15:25:07.388Z",
+            "updatedAt": "2025-10-15T15:25:07.388Z"
+          },
+          {
+            "id": 11,
+            "name": "update:orders",
+            "description": "Modifier des commandes",
+            "createdAt": "2025-10-15T15:25:07.389Z",
+            "updatedAt": "2025-10-15T15:25:07.389Z"
+          },
+          {
+            "id": 12,
+            "name": "delete:orders",
+            "description": "Supprimer des commandes",
+            "createdAt": "2025-10-15T15:25:07.390Z",
+            "updatedAt": "2025-10-15T15:25:07.390Z"
+          }
+        ]
+      }
+    ],
+    "userPreferences": [
+      {
+        "id": 1,
+        "userId": 1,
+        "theme": "auto",
+        "language": "fr",
+        "emailNotifications": true,
+        "pushNotifications": true,
+        "emailDigest": "daily",
+        "sidebarCollapsed": false,
+        "compactMode": false,
+        "createdAt": "2025-10-22T11:47:02.100Z",
+        "updatedAt": "2025-10-22T11:47:02.100Z"
+      }
+    ],
+    "permissions": [
+      {
+        "id": 1,
+        "name": "create:users",
+        "description": "Créer des utilisateurs",
+        "createdAt": "2025-10-15T15:25:07.378Z",
+        "updatedAt": "2025-10-15T15:25:07.378Z"
+      },
+      {
+        "id": 2,
+        "name": "read:users",
+        "description": "Voir les utilisateurs",
+        "createdAt": "2025-10-15T15:25:07.381Z",
+        "updatedAt": "2025-10-15T15:25:07.381Z"
+      },
+      {
+        "id": 3,
+        "name": "update:users",
+        "description": "Modifier les utilisateurs",
+        "createdAt": "2025-10-15T15:25:07.382Z",
+        "updatedAt": "2025-10-15T15:25:07.382Z"
+      },
+      {
+        "id": 4,
+        "name": "delete:users",
+        "description": "Supprimer des utilisateurs",
+        "createdAt": "2025-10-15T15:25:07.383Z",
+        "updatedAt": "2025-10-15T15:25:07.383Z"
+      },
+      {
+        "id": 5,
+        "name": "create:products",
+        "description": "Créer des produits",
+        "createdAt": "2025-10-15T15:25:07.384Z",
+        "updatedAt": "2025-10-15T15:25:07.384Z"
+      },
+      {
+        "id": 6,
+        "name": "read:products",
+        "description": "Voir les produits",
+        "createdAt": "2025-10-15T15:25:07.385Z",
+        "updatedAt": "2025-10-15T15:25:07.385Z"
+      },
+      {
+        "id": 7,
+        "name": "update:products",
+        "description": "Modifier des produits",
+        "createdAt": "2025-10-15T15:25:07.385Z",
+        "updatedAt": "2025-10-15T15:25:07.385Z"
+      },
+      {
+        "id": 8,
+        "name": "delete:products",
+        "description": "Supprimer des produits",
+        "createdAt": "2025-10-15T15:25:07.386Z",
+        "updatedAt": "2025-10-15T15:25:07.386Z"
+      },
+      {
+        "id": 9,
+        "name": "create:orders",
+        "description": "Créer des commandes",
+        "createdAt": "2025-10-15T15:25:07.387Z",
+        "updatedAt": "2025-10-15T15:25:07.387Z"
+      },
+      {
+        "id": 10,
+        "name": "read:orders",
+        "description": "Voir les commandes",
+        "createdAt": "2025-10-15T15:25:07.388Z",
+        "updatedAt": "2025-10-15T15:25:07.388Z"
+      },
+      {
+        "id": 11,
+        "name": "update:orders",
+        "description": "Modifier des commandes",
+        "createdAt": "2025-10-15T15:25:07.389Z",
+        "updatedAt": "2025-10-15T15:25:07.389Z"
+      },
+      {
+        "id": 12,
+        "name": "delete:orders",
+        "description": "Supprimer des commandes",
+        "createdAt": "2025-10-15T15:25:07.390Z",
+        "updatedAt": "2025-10-15T15:25:07.390Z"
+      }
+    ],
+    "appSettings": [
+      {
+        "id": 1,
+        "appName": "Projet-09",
+        "appLanguage": "fr",
+        "appCurrency": "DZD",
+        "appLogo": "/uploads/logos/logo-1761218256086-874100559.png",
+        "appDescription": "",
+        "theme": "dark",
+        "primaryColor": "#3b82f6",
+        "accentColor": "#f75f7d",
+        "emailNotifications": true,
+        "browserNotifications": true,
+        "notificationSound": true,
+        "twoFactorEnabled": false,
+        "sessionTimeout": 3600,
+        "passwordPolicy": "medium",
+        "maintenanceMode": false,
+        "allowRegistration": true,
+        "maxUploadSize": 10,
+        "createdAt": "2025-10-22T11:47:02.074Z",
+        "updatedAt": "2025-10-23T11:17:36.120Z"
+      }
+    ]
+  },
+  "meta": {
+    "userCount": 1,
+    "permissionCount": 12,
+    "preferencesCount": 1
+  }
+}

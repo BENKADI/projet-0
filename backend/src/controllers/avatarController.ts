@@ -44,7 +44,9 @@ class AvatarController {
 
       // Supprimer l'ancien fichier si existant
       if (user?.avatarUrl) {
-        const oldFilePath = path.join(__dirname, '../..', user.avatarUrl);
+        // Assurer un chemin relatif (enlever le slash initial)
+        const relativeOld = user.avatarUrl.replace(/^\/+/, '');
+        const oldFilePath = path.join(__dirname, '../..', relativeOld);
         if (fs.existsSync(oldFilePath)) {
           fs.unlinkSync(oldFilePath);
         }
@@ -98,7 +100,8 @@ class AvatarController {
 
       // Supprimer le fichier physique
       if (user?.avatarUrl) {
-        const filePath = path.join(__dirname, '../..', user.avatarUrl);
+        const relative = user.avatarUrl.replace(/^\/+/, '');
+        const filePath = path.join(__dirname, '../..', relative);
         if (fs.existsSync(filePath)) {
           fs.unlinkSync(filePath);
         }
