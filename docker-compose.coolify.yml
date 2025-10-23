@@ -1,0 +1,168 @@
+version: '3.8'
+
+# Docker Compose optimisé pour Coolify
+# Ce fichier configure l'ensemble de l'application Projet-0 pour un déploiement sur Coolify
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: projet0-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-projet0_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backups:/backups
+    networks:
+      - projet0-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    labels:
+      # Labels Coolify pour la gestion
+      - "coolify.managed=true"
+      - "coolify.type=database"
+      - "coolify.name=projet0-postgres"
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+      args:
+        NODE_ENV: production
+    container_name: projet0-backend
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Configuration Node.js
+      - NODE_ENV=production
+      - PORT=3000
+      
+      # Database
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-projet0_db}?schema=public
+      
+      # JWT Configuration
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-7d}
+      - JWT_REFRESH_EXPIRES_IN=${JWT_REFRESH_EXPIRES_IN:-30d}
+      
+      # CORS
+      - CORS_ORIGIN=${CORS_ORIGIN}
+      
+      # Admin par défaut
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@projet0.com}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      
+      # Google OAuth (optionnel)
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
+      - GOOGLE_CALLBACK_URL=${GOOGLE_CALLBACK_URL:-}
+      
+      # Configuration additionnelle
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - RATE_LIMIT_WINDOW_MS=${RATE_LIMIT_WINDOW_MS:-900000}
+      - RATE_LIMIT_MAX=${RATE_LIMIT_MAX:-100}
+    volumes:
+      - backend_logs:/app/logs
+      - backend_uploads:/app/uploads
+    networks:
+      - projet0-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health/live', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    labels:
+      # Labels Coolify
+      - "coolify.managed=true"
+      - "coolify.type=application"
+      - "coolify.name=projet0-backend"
+      # Configuration du proxy Traefik (utilisé par Coolify)
+      - "traefik.enable=true"
+      - "traefik.http.routers.projet0-backend.rule=Host(`${BACKEND_DOMAIN:-api.localhost}`)"
+      - "traefik.http.routers.projet0-backend.entrypoints=websecure"
+      - "traefik.http.routers.projet0-backend.tls=true"
+      - "traefik.http.routers.projet0-backend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.projet0-backend.loadbalancer.server.port=3000"
+      # Middlewares
+      - "traefik.http.middlewares.projet0-backend-compress.compress=true"
+      - "traefik.http.routers.projet0-backend.middlewares=projet0-backend-compress"
+
+  # Frontend React + Nginx
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+      args:
+        - VITE_API_URL=${VITE_API_URL:-http://localhost:3000}
+    container_name: projet0-frontend
+    restart: always
+    depends_on:
+      - backend
+    environment:
+      - VITE_API_URL=${VITE_API_URL}
+    networks:
+      - projet0-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    labels:
+      # Labels Coolify
+      - "coolify.managed=true"
+      - "coolify.type=application"
+      - "coolify.name=projet0-frontend"
+      # Configuration du proxy Traefik
+      - "traefik.enable=true"
+      - "traefik.http.routers.projet0-frontend.rule=Host(`${FRONTEND_DOMAIN:-localhost}`)"
+      - "traefik.http.routers.projet0-frontend.entrypoints=websecure"
+      - "traefik.http.routers.projet0-frontend.tls=true"
+      - "traefik.http.routers.projet0-frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.projet0-frontend.loadbalancer.server.port=80"
+      # Middlewares
+      - "traefik.http.middlewares.projet0-frontend-compress.compress=true"
+      - "traefik.http.middlewares.projet0-frontend-headers.headers.customresponseheaders.X-Frame-Options=SAMEORIGIN"
+      - "traefik.http.middlewares.projet0-frontend-headers.headers.customresponseheaders.X-Content-Type-Options=nosniff"
+      - "traefik.http.routers.projet0-frontend.middlewares=projet0-frontend-compress,projet0-frontend-headers"
+
+volumes:
+  postgres_data:
+    driver: local
+    labels:
+      - "coolify.managed=true"
+      - "coolify.type=volume"
+      - "coolify.name=projet0-postgres-data"
+  
+  backend_logs:
+    driver: local
+    labels:
+      - "coolify.managed=true"
+      - "coolify.type=volume"
+      - "coolify.name=projet0-backend-logs"
+  
+  backend_uploads:
+    driver: local
+    labels:
+      - "coolify.managed=true"
+      - "coolify.type=volume"
+      - "coolify.name=projet0-backend-uploads"
+
+networks:
+  projet0-network:
+    driver: bridge
+    labels:
+      - "coolify.managed=true"
+      - "coolify.network=projet0"

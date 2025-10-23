@@ -92,3 +92,8 @@ backend/generated/
 *~
 *.bak
 *.orig
+
+# Coolify deployment secrets
+.env.coolify
+.secrets.txt
+secrets/
