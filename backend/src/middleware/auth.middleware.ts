@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '../../generated/prisma';
 import { AuthUser, JwtPayload } from '../types/auth.types';
+import logger from '../config/logger';
 
 const prisma = new PrismaClient();
 
@@ -66,7 +67,9 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
     return;
     
   } catch (error) {
-    console.error('Erreur d\'authentification:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    logger.error('Erreur d\'authentification', { error: errorMessage, stack: errorStack });
     res.status(401).json({ message: 'Token invalide ou expiré.' });
     return;
   }

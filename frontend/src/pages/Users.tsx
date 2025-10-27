@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 import UserForm from '@/components/UserForm';
@@ -12,9 +12,10 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/componen
 import { Badge } from '@/components/ui/Badge';
 import { Avatar, AvatarFallback } from '@/components/ui/Avatar';
 import { Separator } from '@/components/ui/Separator';
-import { Loader2, UserPlus, Trash2, Edit, Check, X, AlertCircle, ArrowUpDown, Mail, User as UserIcon } from 'lucide-react';
+import { Loader2, UserPlus, Trash2, Edit, Check, X, AlertCircle, ArrowUpDown, Mail, User as UserIcon, Copy, Filter } from 'lucide-react';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { DataTableSkeleton } from '@/components/ui/DataTableSkeleton';
+import { logger } from '@/utils/logger';
 
 type SortableKeys = keyof User | 'name';
 
@@ -105,20 +106,42 @@ const Users: React.FC = () => {
     }
   }, [currentPage, totalPages]);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       const data = await getAllUsers();
       setUsers(data);
       setError(null);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Erreur lors du chargement des utilisateurs');
+      const errorMessage = err.response?.data?.message || 'Erreur lors du chargement des utilisateurs';
+      setError(errorMessage);
+      toast.error(errorMessage);
+      logger.error('Erreur chargement utilisateurs:', err);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-    const confirmDelete = async (userId: number) => {
+  const handleCreate = useCallback(() => {
+    setEditingUser(null);
+    setSheetOpen(true);
+  }, []);
+
+  const handleEdit = useCallback((user: User) => {
+    setEditingUser(user);
+    setSheetOpen(true);
+  }, []);
+
+  const handleSave = useCallback(() => {
+    setSheetOpen(false);
+    fetchUsers();
+  }, [fetchUsers]);
+
+  const handleCancel = useCallback(() => {
+    setSheetOpen(false);
+  }, []);
+
+  const confirmDelete = useCallback(async (userId: number) => {
     const userToDelete = users.find(u => u.id === userId);
     try {
       await deleteUser(userId);
@@ -126,56 +149,71 @@ const Users: React.FC = () => {
       setDeleteConfirm(null);
       toast.success(`L'utilisateur ${userToDelete?.email || `ID ${userId}`} a été supprimé.`);
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'La suppression a échoué.');
+      const errorMessage = err.response?.data?.message || 'Erreur lors de la suppression';
+      toast.error(errorMessage);
+      logger.error('Erreur suppression utilisateur:', err);
     }
-  };
+  }, [users, fetchUsers]);
 
-  const handleCreate = () => {
-    setEditingUser(null);
-    setSheetOpen(true);
-  };
+  const copyUserEmail = useCallback((email: string) => {
+    navigator.clipboard.writeText(email);
+    toast.success('Email copié dans le presse-papiers');
+  }, []);
 
-  const handleEdit = (user: User) => {
-    setEditingUser(user);
-    setSheetOpen(true);
-  };
+  const clearFilters = useCallback(() => {
+    setSearchTerm('');
+    setRoleFilter('all');
+    setCurrentPage(1);
+  }, []);
 
-  const handleSave = () => {
-    setSheetOpen(false);
-    setEditingUser(null);
-    fetchUsers();
-    toast.success(`Utilisateur ${editingUser ? 'modifié' : 'créé'} avec succès.`);
-  };
+  // Optimisation: mémoiser les états de calcul
+  const hasActiveFilters = useMemo(() => {
+    return searchTerm || roleFilter !== 'all';
+  }, [searchTerm, roleFilter]);
 
-  const handleCancel = () => {
-    setSheetOpen(false);
-    setEditingUser(null);
-  };
-
-  const requestSort = (key: SortableKeys) => {
+  const requestSort = useCallback((key: SortableKeys) => {
     let direction: 'ascending' | 'descending' = 'ascending';
     if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
       direction = 'descending';
     }
     setSortConfig({ key, direction });
     setCurrentPage(1);
-  };
+  }, [sortConfig]);
 
-  const getSortIcon = (key: SortableKeys) => {
+  const getSortIcon = useCallback((key: SortableKeys) => {
     if (!sortConfig || sortConfig.key !== key) {
       return <ArrowUpDown className="ml-2 h-4 w-4 opacity-30" />;
     }
     return <ArrowUpDown className="ml-2 h-4 w-4 text-primary" />;
-  };
+  }, [sortConfig]);
 
-  const renderTableHeader = (key: SortableKeys, title: string) => (
-    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+  const renderTableHeader = useCallback((key: SortableKeys, title: string, className?: string) => (
+    <th className={className}>
       <Button variant="ghost" onClick={() => requestSort(key)} className="px-0 py-0 h-auto hover:bg-transparent">
         {title}
         {getSortIcon(key)}
       </Button>
     </th>
-  );
+  ), [requestSort, getSortIcon]);
+
+  const getUserInitials = useCallback((user: User) => {
+    const name = `${user.firstName || ''} ${user.lastName || ''}`.trim();
+    if (name) {
+      return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    }
+    return user.email.slice(0, 2).toUpperCase();
+  }, []);
+
+  const getRoleBadgeVariant = useCallback((role: string) => {
+    switch (role?.toLowerCase()) {
+      case 'admin':
+        return 'destructive';
+      case 'user':
+        return 'secondary';
+      default:
+        return 'outline';
+    }
+  }, []);
 
     if (loading) {
     return (

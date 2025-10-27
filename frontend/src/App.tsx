@@ -7,7 +7,6 @@ import Login from './pages/Login';
 import AuthCallback from './pages/AuthCallback';
 import Dashboard from './pages/Dashboard';
 import Users from './pages/Users';
-import Permissions from './pages/Permissions';
 import SettingsPage from './pages/SettingsPage';
 import TestAuth from './pages/TestAuth';
 
@@ -19,19 +18,16 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/test-auth" element={<TestAuth />} />
-          <Route path="/" element={<Navigate to="/login" />} />
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
           
           {/* Protected routes with Navbar */}
           <Route element={<ProtectedRoute />}>
-            <Route
-              path="/*"
-              element={<Layout />}
-            >
+            <Route path="/" element={<Layout />}>
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="users" element={<Users />} />
-              <Route path="permissions" element={<Permissions />} />
-              <Route path="settings" element={<SettingsPage />} />
-              <Route path="*" element={<Navigate to="/dashboard" />} />
+              <Route path="settings/*" element={<SettingsPage />} />
+              <Route path="permissions" element={<Navigate to="/settings?tab=permissions" replace />} />
+              <Route path="*" element={<Navigate to="dashboard" replace />} />
             </Route>
           </Route>
         </Routes>

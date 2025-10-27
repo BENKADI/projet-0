@@ -20,7 +20,17 @@ const consoleFormat = winston.format.combine(
   winston.format.printf(({ timestamp, level, message, ...meta }) => {
     let msg = `${timestamp} [${level}]: ${message}`;
     if (Object.keys(meta).length > 0) {
-      msg += ` ${JSON.stringify(meta)}`;
+      // Formater les objets correctement pour éviter [object Object]
+      const metaStr = Object.keys(meta)
+        .map(key => {
+          const value = meta[key];
+          if (typeof value === 'object' && value !== null) {
+            return `${key}: ${JSON.stringify(value, null, 2)}`;
+          }
+          return `${key}: ${value}`;
+        })
+        .join(' | ');
+      msg += ` | ${metaStr}`;
     }
     return msg;
   })

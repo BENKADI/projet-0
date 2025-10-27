@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { PrismaClient } from '../../generated/prisma';
 import fs from 'fs';
 import path from 'path';
+import logger from '../config/logger';
 
 const prisma = new PrismaClient();
 
@@ -24,7 +25,7 @@ class BackupController {
    */
   async createBackup(_req: Request, res: Response): Promise<void> {
     try {
-      console.log('📦 Création du backup de la base de données...');
+      logger.info('📦 Création du backup de la base de données...');
 
       // Récupérer toutes les données
       const users = await prisma.user.findMany({
@@ -71,12 +72,14 @@ class BackupController {
       // Écrire le fichier
       fs.writeFileSync(filepath, JSON.stringify(backup, null, 2), 'utf-8');
 
-      console.log('✅ Backup créé:', filename);
+      logger.info('✅ Backup créé', { filename });
 
       // Envoyer le fichier en téléchargement
       res.download(filepath, filename, (err) => {
         if (err) {
-          console.error('❌ Erreur lors du téléchargement:', err);
+          const errorMessage = err instanceof Error ? err.message : String(err);
+          const errorStack = err instanceof Error ? err.stack : undefined;
+          logger.error('❌ Erreur lors du téléchargement', { error: errorMessage, stack: errorStack });
           if (!res.headersSent) {
             res.status(500).json({ message: 'Erreur lors du téléchargement du backup' });
           }
@@ -85,12 +88,12 @@ class BackupController {
         setTimeout(() => {
           if (fs.existsSync(filepath)) {
             fs.unlinkSync(filepath);
-            console.log('🗑️ Fichier de backup supprimé:', filename);
+            logger.info('🗑️ Fichier de backup supprimé', { filename });
           }
         }, 5000);
       });
     } catch (error: any) {
-      console.error('❌ Erreur lors de la création du backup:', error);
+      logger.error('❌ Erreur lors de la création du backup', { error: error.message, stack: error.stack });
       res.status(500).json({
         message: error.message || 'Erreur lors de la création du backup',
       });
@@ -134,7 +137,7 @@ class BackupController {
 
       res.status(200).json(stats);
     } catch (error: any) {
-      console.error('❌ Erreur lors de la récupération des stats:', error);
+      logger.error('❌ Erreur lors de la récupération des stats', { error: error.message, stack: error.stack });
       res.status(500).json({
         message: error.message || 'Erreur lors de la récupération des statistiques',
       });
@@ -147,7 +150,7 @@ class BackupController {
    */
   async restoreBackup(req: Request, res: Response): Promise<void> {
     try {
-      console.log('📥 Restauration du backup...');
+      logger.info('📥 Restauration du backup...');
 
       // Vérifier qu'un fichier a été envoyé
       if (!req.file) {
@@ -175,7 +178,7 @@ class BackupController {
         return;
       }
 
-      console.log('✅ Backup valide, début de la restauration...');
+      logger.info('✅ Backup valide, début de la restauration...');
 
       // Compter les éléments à restaurer
       let restored = {
@@ -198,7 +201,7 @@ class BackupController {
           });
           restored.permissions++;
         }
-        console.log(`✅ ${restored.permissions} permissions restaurées`);
+        logger.info('Permissions restaurées', { count: restored.permissions });
       }
 
       // Restaurer les paramètres d'application
@@ -212,12 +215,12 @@ class BackupController {
           });
           restored.appSettings++;
         }
-        console.log(`✅ ${restored.appSettings} paramètres restaurés`);
+        logger.info('Paramètres restaurés', { count: restored.appSettings });
       }
 
       // Note: On ne restaure PAS les utilisateurs pour éviter de verrouiller les admins
       // et d'écraser les mots de passe (qui sont [REDACTED] dans le backup)
-      console.log('⚠️ Utilisateurs non restaurés (sécurité)');
+      logger.warn('⚠️ Utilisateurs non restaurés (sécurité)');
 
       // Restaurer les préférences utilisateur
       if (backup.data.userPreferences && Array.isArray(backup.data.userPreferences)) {
@@ -231,16 +234,17 @@ class BackupController {
             });
             restored.userPreferences++;
           } catch (e) {
-            console.warn('Préférence utilisateur ignorée:', e);
+            const errorMessage = e instanceof Error ? e.message : String(e);
+            logger.warn('Préférence utilisateur ignorée', { error: errorMessage });
           }
         }
-        console.log(`✅ ${restored.userPreferences} préférences restaurées`);
+        logger.info('Préférences restaurées', { count: restored.userPreferences });
       }
 
       // Supprimer le fichier uploadé
       fs.unlinkSync(req.file.path);
 
-      console.log('✅ Restauration terminée avec succès');
+      logger.info('✅ Restauration terminée avec succès');
 
       res.status(200).json({
         message: 'Backup restauré avec succès',
@@ -251,7 +255,7 @@ class BackupController {
         ],
       });
     } catch (error: any) {
-      console.error('❌ Erreur lors de la restauration:', error);
+      logger.error('❌ Erreur lors de la restauration', { error: error.message, stack: error.stack });
       // Nettoyer le fichier si présent
       if (req.file && fs.existsSync(req.file.path)) {
         fs.unlinkSync(req.file.path);

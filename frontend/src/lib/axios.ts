@@ -1,4 +1,5 @@
 import axios, { AxiosHeaders } from 'axios';
+import { logger } from '../utils/logger';
 
 // Configuration de base pour axios
 const axiosInstance = axios.create({
@@ -19,7 +20,7 @@ axiosInstance.interceptors.request.use(
           const user = JSON.parse(userStr);
           token = user.token;
         } catch (err) {
-          console.error('Error parsing user from localStorage', err);
+          logger.error('Error parsing user from localStorage', err);
         }
       }
     }
@@ -55,9 +56,9 @@ axiosInstance.interceptors.response.use(
   (error) => {
     // DÉSACTIVÉ TEMPORAIREMENT POUR DEBUG
     if (error.response?.status === 401) {
-      console.error('🔴 ERREUR 401 - Non autorisé');
-      console.error('URL:', error.config?.url);
-      console.error('Token présent:', !!localStorage.getItem('token'));
+      logger.error('🔴 ERREUR 401 - Non autorisé');
+      logger.error('URL:', error.config?.url);
+      logger.error('Token présent:', !!localStorage.getItem('token'));
       
       // NE PAS REDIRIGER - JUSTE LOGGER
       // localStorage.removeItem('token');

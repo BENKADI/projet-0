@@ -1,18 +1,29 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Settings } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { useSearchParams } from 'react-router-dom';
 import GeneralSettings from '../components/settings/GeneralSettings';
 import ProfileSettings from '../components/settings/ProfileSettings';
 import AppearanceSettings from '../components/settings/AppearanceSettings';
 import NotificationSettings from '../components/settings/NotificationSettings';
 import SecuritySettings from '../components/settings/SecuritySettings';
 import SystemSettings from '../components/settings/SystemSettings';
+import PermissionsSettings from '../components/settings/PermissionsSettings';
 
-type TabType = 'general' | 'profile' | 'appearance' | 'notifications' | 'security' | 'system';
+type TabType = 'general' | 'profile' | 'appearance' | 'notifications' | 'security' | 'system' | 'permissions';
 
 const SettingsPage = () => {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<TabType>('general');
+
+  // Gérer le paramètre d'URL pour l'onglet actif
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam && ['general', 'profile', 'appearance', 'notifications', 'security', 'system', 'permissions'].includes(tabParam)) {
+      setActiveTab(tabParam as TabType);
+    }
+  }, [searchParams]);
 
   const tabs = [
     { id: 'general' as TabType, label: 'Général', icon: '🌍', adminOnly: false },
@@ -20,6 +31,7 @@ const SettingsPage = () => {
     { id: 'appearance' as TabType, label: 'Apparence', icon: '🎨', adminOnly: false },
     { id: 'notifications' as TabType, label: 'Notifications', icon: '🔔', adminOnly: false },
     { id: 'security' as TabType, label: 'Sécurité', icon: '🔒', adminOnly: false },
+    { id: 'permissions' as TabType, label: 'Permissions', icon: '🛡️', adminOnly: true },
     { id: 'system' as TabType, label: 'Système', icon: '💾', adminOnly: true },
   ].filter(tab => !tab.adminOnly || user?.role === 'admin');
 
@@ -64,6 +76,7 @@ const SettingsPage = () => {
             {activeTab === 'appearance' && <AppearanceSettings />}
             {activeTab === 'notifications' && <NotificationSettings />}
             {activeTab === 'security' && <SecuritySettings />}
+            {activeTab === 'permissions' && <PermissionsSettings />}
             {activeTab === 'system' && <SystemSettings />}
           </div>
         </div>

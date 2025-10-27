@@ -275,10 +275,16 @@ export default function GeneralSettings() {
                   alt="Logo" 
                   className="max-h-full max-w-full object-contain"
                   onError={(e) => {
-                    console.error('Erreur chargement logo:', settings.appLogo);
+                    if (import.meta.env.DEV) {
+                      console.error('Erreur chargement logo:', settings.appLogo);
+                    }
                     (e.target as HTMLImageElement).style.display = 'none';
                   }}
-                  onLoad={() => console.log('Logo chargé:', settings.appLogo)}
+                  onLoad={() => {
+                    if (import.meta.env.DEV) {
+                      console.log('Logo chargé:', settings.appLogo);
+                    }
+                  }}
                 />
               ) : (
                 <span className="text-xs text-gray-400">Aucun</span>

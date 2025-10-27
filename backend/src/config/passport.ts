@@ -1,6 +1,7 @@
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { PrismaClient } from '../../generated/prisma';
+import logger from './logger';
 
 const prisma = new PrismaClient();
 
@@ -66,7 +67,9 @@ passport.use(
 
         return done(null, user);
       } catch (error) {
-        console.error('Error in Google OAuth strategy:', error);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorStack = error instanceof Error ? error.stack : undefined;
+        logger.error('Error in Google OAuth strategy', { error: errorMessage, stack: errorStack });
         return done(error as Error, undefined);
       }
     }

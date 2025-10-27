@@ -8,11 +8,8 @@ export const requestLogger = (
 ) => {
   const startTime = Date.now();
 
-  // Log request
-  logger.info({
-    type: 'request',
-    method: req.method,
-    url: req.originalUrl,
+  // Log request avec un message formaté
+  logger.info(`📥 ${req.method} ${req.originalUrl}`, {
     ip: req.ip,
     userAgent: req.get('user-agent'),
   });
@@ -20,19 +17,21 @@ export const requestLogger = (
   // Log response
   res.on('finish', () => {
     const duration = Date.now() - startTime;
-    const logData = {
-      type: 'response',
-      method: req.method,
-      url: req.originalUrl,
-      statusCode: res.statusCode,
-      duration: `${duration}ms`,
-      ip: req.ip,
-    };
+    const emoji = res.statusCode >= 400 ? '❌' : '✅';
+    const message = `${emoji} ${req.method} ${req.originalUrl} - ${res.statusCode} (${duration}ms)`;
 
     if (res.statusCode >= 400) {
-      logger.warn(logData);
+      logger.warn(message, {
+        statusCode: res.statusCode,
+        duration,
+        ip: req.ip,
+      });
     } else {
-      logger.info(logData);
+      logger.info(message, {
+        statusCode: res.statusCode,
+        duration,
+        ip: req.ip,
+      });
     }
   });
 

@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { PrismaClient } from '../../generated/prisma';
 import path from 'path';
 import fs from 'fs';
+import logger from '../config/logger';
 
 const prisma = new PrismaClient();
 
@@ -73,7 +74,9 @@ class AvatarController {
         user: updatedUser,
       });
     } catch (error: unknown) {
-      console.error('Erreur upload avatar:', error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      logger.error('Erreur upload avatar', { error: errorMessage, stack: errorStack });
       res.status(500).json({
         message: 'Erreur lors de l\'upload de l\'avatar',
       });
@@ -126,7 +129,9 @@ class AvatarController {
         user: updatedUser,
       });
     } catch (error: unknown) {
-      console.error('Erreur suppression avatar:', error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      logger.error('Erreur suppression avatar', { error: errorMessage, stack: errorStack });
       res.status(500).json({
         message: 'Erreur lors de la suppression de l\'avatar',
       });

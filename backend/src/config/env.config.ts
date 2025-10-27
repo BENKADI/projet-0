@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import dotenv from 'dotenv';
+import logger from './logger';
 
 // Charger les variables d'environnement
 dotenv.config();
@@ -43,10 +44,10 @@ let env: EnvConfig;
 
 try {
   env = envSchema.parse(process.env);
-  console.log('✅ Environment variables validated successfully');
+  logger.info('✅ Environment variables validated successfully');
 } catch (error) {
   if (error instanceof z.ZodError) {
-    console.error('❌ Invalid environment variables:', error.errors);
+    logger.error('❌ Invalid environment variables', { errors: error.errors });
     process.exit(1);
   }
   throw error;

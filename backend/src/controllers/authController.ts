@@ -4,6 +4,7 @@ import { hashPassword, comparePasswords, generateToken } from '../utils/authUtil
 import { UserInput } from '../types';
 import { AuthUser } from '../types/auth.types';
 import passport from '../config/passport';
+import logger from '../config/logger';
 
 const prisma = new PrismaClient();
 
@@ -52,7 +53,9 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       token
     });
   } catch (error) {
-    console.error('Error during registration:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    logger.error('Error during registration', { error: errorMessage, stack: errorStack });
     res.status(500).json({ message: 'Internal server error.' });
   }
 };
@@ -102,7 +105,9 @@ export const changePassword = async (req: Request, res: Response): Promise<void>
     res.status(200).json({ message: 'Mot de passe modifié avec succès.' });
     return;
   } catch (error) {
-    console.error('Error changing password:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    logger.error('Error changing password', { error: errorMessage, stack: errorStack });
     res.status(500).json({ message: 'Internal server error.' });
   }
 };
@@ -112,11 +117,11 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password }: UserInput = req.body;
     
-    console.log(`Tentative de connexion pour: ${email}`);
+    logger.info('Tentative de connexion', { email });
 
     // Validate input
     if (!email || !password) {
-      console.log(`Connexion échouée: email ou mot de passe manquant`);
+      logger.warn('Connexion échouée: email ou mot de passe manquant', { email });
       res.status(400).json({ message: 'Email and password are required.' });
       return;
     }
@@ -128,32 +133,32 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     });
 
     if (!user) {
-      console.log(`Connexion échouée: utilisateur non trouvé pour ${email}`);
+      logger.warn('Connexion échouée: utilisateur non trouvé', { email });
       res.status(401).json({ message: 'Invalid email or password.' });
       return;
     }
     
-    console.log(`Utilisateur trouvé: ${user.email}, rôle: ${user.role}`);
+    logger.info('Utilisateur trouvé', { email: user.email, role: user.role });
 
     // Vérifier si l'utilisateur utilise Google OAuth
     if (user.provider === 'google' && !user.password) {
-      console.log(`Connexion échouée: utilisateur ${email} doit utiliser Google OAuth`);
+      logger.warn('Connexion échouée: utilisateur doit utiliser Google OAuth', { email });
       res.status(401).json({ message: 'Please use Google Sign-In for this account.' });
       return;
     }
 
     // Verify password
     if (!user.password) {
-      console.log(`Connexion échouée: mot de passe manquant pour ${email}`);
+      logger.warn('Connexion échouée: mot de passe manquant', { email });
       res.status(401).json({ message: 'Invalid email or password.' });
       return;
     }
 
     const isPasswordValid = await comparePasswords(password, user.password);
-    console.log(`Vérification du mot de passe pour ${email}: ${isPasswordValid ? 'Succès' : 'Échec'}`);
+    logger.info('Vérification du mot de passe', { email, success: isPasswordValid });
 
     if (!isPasswordValid) {
-      console.log(`Connexion échouée: mot de passe invalide pour ${email}`);
+      logger.warn('Connexion échouée: mot de passe invalide', { email });
       res.status(401).json({ message: 'Invalid email or password.' });
       return;
     }
@@ -162,7 +167,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     const token = generateToken(user.id);
 
     // Return user data and token
-    console.log(`Connexion réussie pour: ${email} avec le rôle: ${user.role}`);
+    logger.info('Connexion réussie', { email, role: user.role });
     res.status(200).json({
       message: 'Login successful.',
       user: {
@@ -174,7 +179,9 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     });
     return;
   } catch (error) {
-    console.error('Error during login:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    logger.error('Error during login', { error: errorMessage, stack: errorStack });
     res.status(500).json({ message: 'Internal server error.' });
   }
 };
@@ -188,7 +195,7 @@ export const googleAuth = passport.authenticate('google', {
 export const googleCallback = (req: Request, res: Response, next: NextFunction) => {
   passport.authenticate('google', { session: false }, (err: any, user: any) => {
     if (err || !user) {
-      console.error('Google OAuth error:', err);
+      logger.error('Google OAuth error', { error: err.message, stack: err.stack });
       // Rediriger vers le frontend avec une erreur
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
       return res.redirect(`${frontendUrl}/login?error=auth_failed`);
@@ -202,7 +209,9 @@ export const googleCallback = (req: Request, res: Response, next: NextFunction) 
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
       res.redirect(`${frontendUrl}/auth/callback?token=${token}`);
     } catch (error) {
-      console.error('Error generating token:', error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      logger.error('Error generating token', { error: errorMessage, stack: errorStack });
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
       res.redirect(`${frontendUrl}/login?error=token_generation_failed`);
     }
@@ -236,7 +245,9 @@ export const getCurrentUser = async (req: Request, res: Response): Promise<void>
       }
     });
   } catch (error) {
-    console.error('Error fetching current user:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    logger.error('Error fetching current user', { error: errorMessage, stack: errorStack });
     res.status(500).json({ message: 'Internal server error.' });
   }
 };

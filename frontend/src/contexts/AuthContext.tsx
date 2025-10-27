@@ -2,6 +2,7 @@ import React, { createContext, useState, useEffect, ReactNode } from 'react';
 import { isAxiosError } from 'axios';
 import { login as apiLogin, logout as apiLogout, getCurrentUser, setTokenFromOAuth, type AuthResponse } from '../services/authService';
 import axios from '@/lib/axios';
+import { logger } from '../utils/logger';
 
 interface User {
   id: string | number;
@@ -59,17 +60,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(response.user);
       return response;
     } catch (error: unknown) {
-      console.error('Login error:', error);
+      logger.error('Login error:', error);
       
       // Enhanced error logging for debugging
       if (isAxiosError(error)) {
-        // Server responded with error status
-        console.error('Error response data:', error.response?.data);
-        console.error('Error response status:', error.response?.status);
-        console.error('Error response headers:', error.response?.headers);
+        logger.error('Error response data:', error.response?.data);
+        logger.error('Error response status:', error.response?.status);
+        logger.error('Error response headers:', error.response?.headers);
       } else {
-        // Error in setting up the request
-        console.error('Error message:', (error as Error)?.message);
+        logger.error('Error message:', (error as Error)?.message);
       }
       
       throw error;
@@ -88,7 +87,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const response = await setTokenFromOAuth(token);
       setUser(response.user);
     } catch (error) {
-      console.error('Error setting token:', error);
+      logger.error('Error setting token:', error);
       throw error;
     }
   };
@@ -105,7 +104,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser(resp.data);
       }
     } catch (e) {
-      console.error('Failed to refresh user:', e);
+      logger.error('Failed to refresh user:', e);
     }
   };
 
