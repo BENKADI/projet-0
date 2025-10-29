@@ -85,8 +85,13 @@ model UserPreferences {
   
   // Notifications personnelles
   emailNotifications    Boolean   @default(true)
-  pushNotifications     Boolean   @default(true)
-  emailDigest           String    @default("daily") // "realtime", "daily", "weekly", "never"
+  pushNotifications     Boolean   @default(false)
+  newUserRegistration    Boolean   @default(true)
+  systemAlerts           Boolean   @default(true)
+  securityAlerts         Boolean   @default(true)
+  weeklyReports          Boolean   @default(false)
+  marketingEmails        Boolean   @default(false)
+  emailDigest            String    @default("daily") // "realtime", "daily", "weekly", "never"
   
   // Interface
   sidebarCollapsed      Boolean   @default(false)

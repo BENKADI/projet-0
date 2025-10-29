@@ -1,0 +1,3 @@
+# Icône temporaire 192x192 (remplacer par une vraie image PNG)
+# En production, créer une vraie icône PNG 192x192 pixels
+# avec le logo de l'application
