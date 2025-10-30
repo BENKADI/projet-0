@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { History, Download, Trash2, AlertTriangle } from 'lucide-react';
 import axios from '../../lib/axios';
 import { useAuth } from '../../hooks/useAuth';
@@ -18,24 +18,56 @@ export default function BackupHistory() {
   const [backups, setBackups] = useState<BackupHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const hasWarnedRef = useRef(false);
 
-  useEffect(() => {
-    fetchBackupHistory();
-  }, []);
+  const fetchBackupHistory = useCallback(async () => {
+    if (!isAdmin) {
+      setLoading(false);
+      setBackups([]);
+      setError('Accès restreint — seuls les administrateurs peuvent consulter l\'historique des sauvegardes.');
+      return;
+    }
 
-  const fetchBackupHistory = async () => {
-    if (!isAdmin) return;
+    setLoading(true);
+    setError(null);
 
     try {
       const response = await axios.get('/backup/history');
       setBackups(response.data);
-    } catch (error) {
-      console.error('Erreur chargement historique:', error);
-      toast.error('Erreur lors du chargement de l\'historique');
+    } catch (err) {
+      console.error('Erreur chargement historique:', err);
+
+      if (!hasWarnedRef.current) {
+        toast.warning('Impossible de charger l\'historique réel, affichage de données de démonstration.');
+        hasWarnedRef.current = true;
+      }
+
+      setError('Historique indisponible pour le moment. Les données ci-dessous sont affichées à titre de démonstration.');
+      setBackups([
+        {
+          id: 'demo-backup-1',
+          filename: 'backup-demo-1.zip',
+          size: 5_242_880,
+          createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+          createdBy: user?.email || 'Système'
+        },
+        {
+          id: 'demo-backup-2',
+          filename: 'backup-demo-2.zip',
+          size: 7_340_032,
+          createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
+          createdBy: 'Service automatisé'
+        }
+      ]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [isAdmin, user?.email]);
+
+  useEffect(() => {
+    fetchBackupHistory();
+  }, [fetchBackupHistory]);
 
   const downloadBackup = async (filename: string) => {
     try {
@@ -119,6 +151,12 @@ export default function BackupHistory() {
           Actualiser
         </button>
       </div>
+
+      {error && (
+        <div className="p-4 border border-yellow-300 dark:border-yellow-600 bg-yellow-50 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 rounded-lg text-sm">
+          {error}
+        </div>
+      )}
 
       {loading ? (
         <div className="space-y-3">

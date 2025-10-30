@@ -29,7 +29,7 @@ Requis: Rôle Admin
 ### **2. Recherche & Filtres Avancés** ✅
 - ✅ **Recherche globale** (nom + description)
 - ✅ **Filtre par Action** (create, read, update, delete)
-- ✅ **Filtre par Ressource** (users, products, orders, etc.)
+- ✅ **Filtre par Ressource** (ex: users, settings, permissions)
 - ✅ **Effacer tous les filtres** en un clic
 
 ### **3. Tri & Pagination** ✅
@@ -63,8 +63,7 @@ format: "action:ressource"
 
 Exemples:
 ✅ create:users
-✅ read:products
-✅ update:orders
+-
 ✅ delete:inventory
 ✅ manage:settings
 ```
@@ -80,13 +79,12 @@ manage  → Gérer complètement (admin)
 
 ### **Ressources Typiques**
 ```typescript
-users       → Utilisateurs
-products    → Produits
-orders      → Commandes
-inventory   → Inventaire
-settings    → Paramètres
-permissions → Permissions elles-mêmes
-reports     → Rapports
+users        → Utilisateurs
+settings     → Paramètres
+permissions  → Gestion des permissions
+analytics    → Analyses et métriques
+notifications→ Notifications
+profile      → Profil utilisateur
 ```
 
 ---
@@ -196,8 +194,8 @@ model User {
 ```bash
 1. Cliquer sur "Ajouter une permission"
 2. Remplir le formulaire:
-   - Nom: create:products
-   - Description: Permet de créer des produits
+   - Nom: create:permissions
+   - Description: Permet de créer de nouvelles permissions
 3. Cliquer sur "Enregistrer"
 ✅ Permission créée avec succès!
 ```
@@ -235,8 +233,8 @@ Sélectionner "users" dans le dropdown "Ressource"
 → Affiche uniquement *:users
 
 # Combiner filtres
-Action: read + Ressource: products
-→ Affiche uniquement read:products
+Action: read + Ressource: permissions
+→ Affiche uniquement read:permissions
 ```
 
 ### **6. Copier un Nom de Permission**
@@ -258,7 +256,7 @@ Action: read + Ressource: products
 SELECT id, email FROM "User" WHERE email = 'user@example.com';
 
 -- 2. Trouver l'ID de la permission
-SELECT id, name FROM "Permission" WHERE name = 'create:products';
+SELECT id, name FROM "Permission" WHERE name = 'create:permissions';
 
 -- 3. Créer la relation
 INSERT INTO "_PermissionToUser" ("A", "B")
@@ -267,7 +265,7 @@ VALUES (permission_id, user_id);
 -- Exemple complet
 INSERT INTO "_PermissionToUser" ("A", "B")
 VALUES (
-  (SELECT id FROM "Permission" WHERE name = 'create:products'),
+  (SELECT id FROM "Permission" WHERE name = 'create:permissions'),
   (SELECT id FROM "User" WHERE email = 'user@example.com')
 );
 ```
@@ -309,8 +307,8 @@ Body: {
 ├──────────────────────────────────────────────────────────┤
 │ [✓] ID  Nom              Description          Actions    │
 │ [ ] 1   create:users     Créer utilisateurs   [✏️][🗑️]   │
-│ [ ] 2   read:products    Lire produits        [✏️][🗑️]   │
-│ [ ] 3   update:orders    Modifier commandes   [✏️][🗑️]   │
+│ [ ] 2   read:permissions Lire permissions     [✏️][🗑️]   │
+│ [ ] 3   update:settings  Modifier paramètres  [✏️][🗑️]   │
 ├──────────────────────────────────────────────────────────┤
 │ Page 1 sur 5                          [< 1 2 3 4 5 >]   │
 └──────────────────────────────────────────────────────────┘
@@ -323,7 +321,7 @@ Body: {
 ├──────────────────────────────────┤
 │                                  │
 │ Nom *                            │
-│ [create:products        ]        │
+│ [create:permissions     ]        │
 │                                  │
 │ Description                      │
 │ [Permet de créer des     ]       │
@@ -346,13 +344,15 @@ delete:users        → Supprimer utilisateurs
 manage:users        → Gestion complète users
 ```
 
-### **Module Products**
+### **Module Settings & Permissions**
 ```typescript
-create:products     → Ajouter produits
-read:products       → Consulter catalogue
-update:products     → Modifier produits
-delete:products     → Supprimer produits
-manage:inventory    → Gérer stock
+read:settings       → Consulter les paramètres
+update:settings     → Modifier les paramètres
+create:permissions  → Ajouter des permissions
+read:permissions    → Voir les permissions
+update:permissions  → Modifier les permissions
+delete:permissions  → Supprimer des permissions
+export:permissions  → Exporter les permissions
 ```
 
 ### **Module Orders**
@@ -381,10 +381,10 @@ manage:backups      → Gérer sauvegardes
 
 ```typescript
 // Middleware hasPermission
-router.get('/products', 
+router.get('/permissions',
   authenticate,
-  hasPermission('read:products'),
-  productController.getAll
+  hasPermission('read:permissions'),
+  permissionController.getAll
 );
 
 // Middleware hasPermissions (multiple)
@@ -401,9 +401,9 @@ router.post('/orders',
 // Hook personnalisé (à créer)
 const { hasPermission } = usePermissions();
 
-{hasPermission('create:products') && (
-  <Button onClick={createProduct}>
-    Créer un produit
+{hasPermission('update:settings') && (
+  <Button onClick={updateSettings}>
+    Mettre à jour les paramètres
   </Button>
 )}
 ```
@@ -457,11 +457,12 @@ manage: 8 permissions
 
 ### **Permissions par Ressource**
 ```typescript
-users:       5 permissions
-products:    8 permissions
-orders:      6 permissions
-settings:    4 permissions
-permissions: 3 permissions
+users:         6 permissions
+profile:       2 permissions
+settings:      4 permissions
+permissions:   7 permissions
+analytics:     1 permission
+notifications: 2 permissions
 ```
 
 ---

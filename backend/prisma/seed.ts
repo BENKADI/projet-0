@@ -1,25 +1,8 @@
 import { PrismaClient } from '../generated/prisma'
 import { hashPassword } from '../src/utils/authUtils'
+import { PERMISSION_DEFINITIONS } from '../src/shared/constants/permissions'
 
 const prisma = new PrismaClient()
-
-// Définition des permissions de base
-const defaultPermissions = [
-  { name: 'create:users', description: 'Créer des utilisateurs' },
-  { name: 'read:users', description: 'Voir les utilisateurs' },
-  { name: 'update:users', description: 'Modifier les utilisateurs' },
-  { name: 'delete:users', description: 'Supprimer des utilisateurs' },
-  
-  { name: 'create:products', description: 'Créer des produits' },
-  { name: 'read:products', description: 'Voir les produits' },
-  { name: 'update:products', description: 'Modifier des produits' },
-  { name: 'delete:products', description: 'Supprimer des produits' },
-  
-  { name: 'create:orders', description: 'Créer des commandes' },
-  { name: 'read:orders', description: 'Voir les commandes' },
-  { name: 'update:orders', description: 'Modifier des commandes' },
-  { name: 'delete:orders', description: 'Supprimer des commandes' },
-]
 
 // Note: Les ressources ont été retirées car elles ne sont pas définies dans le schéma Prisma actuel
 
@@ -28,7 +11,7 @@ async function main() {
   
   // 1. Créer les permissions par défaut
   console.log('📝 Création des permissions par défaut...')
-  for (const permission of defaultPermissions) {
+  for (const permission of PERMISSION_DEFINITIONS) {
     await prisma.permission.upsert({
       where: { name: permission.name },
       update: {},
@@ -38,7 +21,7 @@ async function main() {
   
   // Note: La création des ressources a été retirée car le modèle resource n'existe pas dans le schéma Prisma actuel
   
-  console.log(`✅ ${defaultPermissions.length} permissions créées\n`)
+  console.log(`✅ ${PERMISSION_DEFINITIONS.length} permissions créées\n`)
   
   // 3. Récupérer toutes les permissions
   const allPermissions = await prisma.permission.findMany()
