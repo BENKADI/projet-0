@@ -9,16 +9,9 @@ import { Checkbox } from '@/components/ui/Checkbox';
 import { ScrollArea } from '@/components/ui/ScrollArea';
 import { Plus, Trash2, Pencil, Save } from 'lucide-react';
 import { toast } from 'sonner';
-import { Permission } from '@/types';
+import { Permission } from '@/services/permissionService';
 import { getAllPermissions } from '@/services/permissionService';
-
-interface Role {
-  id: string;
-  name: string;
-  description?: string;
-  permissions: string[];
-  isSystem?: boolean;
-}
+import { getAllRoles, createRole, updateRole, deleteRole, type Role, type RoleCreateInput, type RoleUpdateInput } from '@/services/roleService';
 
 const RolesSettings: React.FC = () => {
   const [roles, setRoles] = useState<Role[]>([]);
@@ -35,32 +28,66 @@ const RolesSettings: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [permissionsData] = await Promise.all([
+        const [permissionsData, rolesData] = await Promise.all([
           getAllPermissions(),
-          // fetchRoles() // À implémenter côté backend
+          getAllRoles(),
         ]);
         
         setPermissions(permissionsData);
-        
-        // Données factices pour la démo - À remplacer par un appel API
-        setRoles([
-          {
-            id: 'admin',
-            name: 'Administrateur',
-            description: 'Accès complet à toutes les fonctionnalités',
-            permissions: permissionsData.map(p => p.name),
-            isSystem: true
-          },
-          {
-            id: 'user',
-            name: 'Utilisateur standard',
-            permissions: ['read:profile', 'update:profile', 'read:settings'],
-            isSystem: true
-          }
-        ]);
+        setRoles(rolesData);
       } catch (error) {
         console.error('Error fetching data:', error);
-        toast.error('Erreur lors du chargement des données');
+        
+        // Fallback: Si l'API n'est pas disponible, charger les permissions et créer des rôles démo
+        try {
+          const permissionsData = await getAllPermissions();
+          setPermissions(permissionsData);
+          
+          // Créer des rôles de démonstration si l'API roles n'existe pas
+          const adminPermissions = permissionsData.map((p) => p.name);
+          const userPermissions = permissionsData
+            .filter((p) => p.name.startsWith('read:') || p.name.includes('profile') || p.name.includes('settings'))
+            .map((p) => p.name);
+          const viewerPermissions = permissionsData
+            .filter((p) => p.name.startsWith('read:'))
+            .map((p) => p.name);
+
+          setRoles([
+            {
+              id: 'admin',
+              name: 'Administrateur',
+              description: 'Accès complet à toutes les fonctionnalités',
+              permissions: adminPermissions,
+              isSystem: true,
+            },
+            {
+              id: 'manager',
+              name: 'Manager',
+              description: 'Gestion avancée des utilisateurs et des commandes',
+              permissions: Array.from(new Set([...userPermissions, ...permissionsData.filter((p) => p.name.includes('update:orders')).map((p) => p.name)])),
+              isSystem: true,
+            },
+            {
+              id: 'user',
+              name: 'Utilisateur',
+              description: 'Accès standard aux fonctionnalités principales',
+              permissions: userPermissions,
+              isSystem: true,
+            },
+            {
+              id: 'viewer',
+              name: 'Lecteur',
+              description: 'Accès en lecture seule aux modules principaux',
+              permissions: viewerPermissions,
+              isSystem: true,
+            },
+          ]);
+          
+          toast.info('Rôles de démonstration chargés (API non disponible)');
+        } catch (permError) {
+          console.error('Error loading permissions fallback:', permError);
+          toast.error('Erreur lors du chargement des données');
+        }
       } finally {
         setIsLoading(false);
       }
@@ -90,12 +117,44 @@ const RolesSettings: React.FC = () => {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Ici, vous ajouteriez la logique pour sauvegarder le rôle
-    toast.success(editingRole ? 'Rôle mis à jour avec succès' : 'Rôle créé avec succès');
-    setIsDialogOpen(false);
-    // Réinitialiser le formulaire
+
+    if (!formData.name.trim()) {
+      toast.error('Le nom du rôle est requis');
+      return;
+    }
+
+    try {
+      if (editingRole) {
+        const updateData: RoleUpdateInput = {
+          name: formData.name.trim(),
+          description: formData.description.trim() || undefined,
+          permissions: formData.permissions,
+        };
+        const updated = await updateRole(editingRole.id, updateData);
+        setRoles(prev => prev.map(r => r.id === updated.id ? updated : r));
+        toast.success('Rôle mis à jour avec succès');
+      } else {
+        const createData: RoleCreateInput = {
+          name: formData.name.trim(),
+          description: formData.description.trim() || undefined,
+          permissions: formData.permissions,
+        };
+        const created = await createRole(createData);
+        setRoles(prev => [created, ...prev]);
+        toast.success('Rôle créé avec succès');
+      }
+
+      setIsDialogOpen(false);
+      resetForm();
+    } catch (error) {
+      console.error('Error saving role:', error);
+      toast.error('Erreur lors de la sauvegarde du rôle');
+    }
+  };
+
+  const resetForm = () => {
     setFormData({ name: '', description: '', permissions: [] });
     setEditingRole(null);
   };
@@ -114,37 +173,64 @@ const RolesSettings: React.FC = () => {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (roleId: string) => {
+  const handleDelete = async (roleId: string) => {
     const role = roles.find(r => r.id === roleId);
     if (role?.isSystem) {
       toast.warning('Les rôles système ne peuvent pas être supprimés');
       return;
     }
-    
-    // Ici, vous ajouteriez la logique pour supprimer le rôle
-    toast.success('Rôle supprimé avec succès');
+
+    if (!window.confirm(`Êtes-vous sûr de vouloir supprimer le rôle "${role?.name}" ?`)) {
+      return;
+    }
+
+    try {
+      await deleteRole(roleId);
+      setRoles(prev => prev.filter(r => r.id !== roleId));
+      toast.success('Rôle supprimé avec succès');
+    } catch (error) {
+      console.error('Error deleting role:', error);
+      toast.error('Erreur lors de la suppression du rôle');
+    }
   };
 
   if (isLoading) {
-    return <div>Chargement des rôles...</div>;
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div className="space-y-2">
+            <div className="h-8 w-48 bg-muted animate-pulse rounded" />
+            <div className="h-4 w-64 bg-muted animate-pulse rounded" />
+          </div>
+          <div className="h-10 w-32 bg-muted animate-pulse rounded" />
+        </div>
+        <Card>
+          <CardHeader>
+            <div className="h-6 w-32 bg-muted animate-pulse rounded" />
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-16 bg-muted animate-pulse rounded" />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold">Gestion des Rôles</h2>
-          <p className="text-muted-foreground">Créez et gérez les rôles et leurs permissions</p>
-        </div>
-        <Button onClick={() => setIsDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Nouveau Rôle
-        </Button>
-      </div>
-
       <Card>
         <CardHeader>
-          <CardTitle>Liste des Rôles</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>Liste des Rôles</CardTitle>
+            <Button onClick={() => setIsDialogOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Nouveau Rôle
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
@@ -157,60 +243,86 @@ const RolesSettings: React.FC = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {roles.map((role) => (
-                <TableRow key={role.id}>
-                  <TableCell className="font-medium">
-                    <div className="flex items-center">
-                      {role.name}
-                      {role.isSystem && (
-                        <span className="ml-2 text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
-                          Système
-                        </span>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {role.description || 'Aucune description'}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1 max-w-md">
-                      {role.permissions.slice(0, 3).map(permission => (
-                        <span 
-                          key={permission}
-                          className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary"
-                        >
-                          {permission}
-                        </span>
-                      ))}
-                      {role.permissions.length > 3 && (
-                        <span className="text-xs text-muted-foreground">
-                          +{role.permissions.length - 3} de plus
-                        </span>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
+              {roles.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="h-32 text-center">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <p className="text-muted-foreground">Aucun rôle trouvé</p>
                       <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => handleEdit(role)}
-                        disabled={role.isSystem}
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => setIsDialogOpen(true)}
                       >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => handleDelete(role.id)}
-                        disabled={role.isSystem}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
+                        <Plus className="mr-2 h-4 w-4" />
+                        Créer un rôle
                       </Button>
                     </div>
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                roles.map((role) => (
+                  <TableRow key={role.id}>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        {role.name}
+                        {role.isSystem && (
+                          <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
+                            Système
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground max-w-xs truncate">
+                      {role.description || <span className="italic text-muted-foreground/60">Aucune description</span>}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1 max-w-md">
+                        {role.permissions.length === 0 ? (
+                          <span className="text-xs text-muted-foreground italic">Aucune permission</span>
+                        ) : (
+                          <>
+                            {role.permissions.slice(0, 3).map(permission => (
+                              <span 
+                                key={permission}
+                                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary"
+                              >
+                                {permission}
+                              </span>
+                            ))}
+                            {role.permissions.length > 3 && (
+                              <span className="text-xs text-muted-foreground font-medium">
+                                +{role.permissions.length - 3} de plus
+                              </span>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => handleEdit(role)}
+                          disabled={role.isSystem}
+                          title={role.isSystem ? 'Les rôles système ne peuvent pas être modifiés' : 'Modifier le rôle'}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => handleDelete(role.id)}
+                          disabled={role.isSystem}
+                          title={role.isSystem ? 'Les rôles système ne peuvent pas être supprimés' : 'Supprimer le rôle'}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </CardContent>
@@ -251,12 +363,37 @@ const RolesSettings: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <Label>Permissions</Label>
+                <div className="flex items-center justify-between">
+                  <Label>Permissions</Label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">
+                      {formData.permissions.length} / {permissions.length} sélectionnées
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        if (formData.permissions.length === permissions.length) {
+                          setFormData(prev => ({ ...prev, permissions: [] }));
+                        } else {
+                          setFormData(prev => ({ 
+                            ...prev, 
+                            permissions: permissions.map(p => p.name) 
+                          }));
+                        }
+                      }}
+                      className="h-7 text-xs"
+                    >
+                      {formData.permissions.length === permissions.length ? 'Tout désélectionner' : 'Tout sélectionner'}
+                    </Button>
+                  </div>
+                </div>
                 <div className="border rounded-md p-2 bg-muted/20">
                   <ScrollArea className="h-64">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 p-2">
                       {permissions.map((permission) => (
-                        <div key={permission.id} className="flex items-center space-x-2">
+                        <div key={permission.id} className="flex items-center space-x-2 p-1.5 hover:bg-accent/50 rounded">
                           <Checkbox
                             id={`perm-${permission.id}`}
                             checked={formData.permissions.includes(permission.name)}
@@ -264,11 +401,11 @@ const RolesSettings: React.FC = () => {
                           />
                           <label
                             htmlFor={`perm-${permission.id}`}
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex-1"
                           >
                             {permission.name}
                             {permission.description && (
-                              <p className="text-xs text-muted-foreground">
+                              <p className="text-xs text-muted-foreground font-normal">
                                 {permission.description}
                               </p>
                             )}
@@ -287,8 +424,7 @@ const RolesSettings: React.FC = () => {
                 variant="outline"
                 onClick={() => {
                   setIsDialogOpen(false);
-                  setFormData({ name: '', description: '', permissions: [] });
-                  setEditingRole(null);
+                  resetForm();
                 }}
               >
                 Annuler

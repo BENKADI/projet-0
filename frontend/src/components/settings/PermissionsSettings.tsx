@@ -595,24 +595,19 @@ const PermissionsSettings: React.FC = () => {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5 text-purple-500" />
-                Gestion des Rôles
-              </CardTitle>
-              <CardDescription>
-                Créez, modifiez et associez des permissions aux rôles.
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <RolesSettings />
-        </CardContent>
-      </Card>
+      {/* Section Gestion des Rôles */}
+      <div className="space-y-4">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+            <Shield className="h-6 w-6 text-purple-500" />
+            Gestion des Rôles
+          </h2>
+          <p className="text-muted-foreground mt-1">
+            Créez, modifiez et associez des permissions aux rôles.
+          </p>
+        </div>
+        <RolesSettings />
+      </div>
 
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetContent className="sm:max-w-lg">

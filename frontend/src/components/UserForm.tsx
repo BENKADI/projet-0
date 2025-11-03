@@ -5,7 +5,7 @@ import {
   getAllPermissions, createUser, updateUser, getUserById
 } from '../services/userService';
 import { Permission } from '../services/permissionService';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from './ui/Card';
+import { getAllRoles, type Role } from '../services/roleService';
 import { Input } from './ui/Input';
 import { Label } from './ui/Label';
 import { Button } from './ui/Button';
@@ -31,6 +31,7 @@ const UserForm: React.FC<UserFormProps> = ({ userId, isEdit = false, onSave, onC
   });
 
   const [permissions, setPermissions] = useState<Permission[]>([]);
+  const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,8 +40,12 @@ const UserForm: React.FC<UserFormProps> = ({ userId, isEdit = false, onSave, onC
     const init = async () => {
       try {
         setLoading(true);
-        const permsData = await getAllPermissions();
+        const [permsData, rolesData] = await Promise.all([
+          getAllPermissions(),
+          getAllRoles()
+        ]);
         setPermissions(permsData);
+        setRoles(rolesData);
 
         if (isEdit && userId) {
           const userData = await getUserById(userId);
@@ -216,9 +221,28 @@ const UserForm: React.FC<UserFormProps> = ({ userId, isEdit = false, onSave, onC
                 required
                 disabled={saving}
               >
-                <option value="user">Utilisateur</option>
-                <option value="admin">Administrateur</option>
+                {/* Roles par défaut si l'API ne répond pas */}
+                {roles.length === 0 ? (
+                  <>
+                    <option value="user">Utilisateur</option>
+                    <option value="admin">Administrateur</option>
+                  </>
+                ) : (
+                  // Afficher les rôles depuis l'API
+                  roles.map((role) => (
+                    <option key={role.id} value={role.name.toLowerCase()}>
+                      {role.name}
+                      {role.description && ` - ${role.description}`}
+                    </option>
+                  ))
+                )}
               </select>
+              {roles.length > 0 && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  {roles.find(r => r.name.toLowerCase() === formData.role)?.description || 
+                   `${roles.length} rôles disponibles`}
+                </p>
+              )}
             </div>
           </div>
 

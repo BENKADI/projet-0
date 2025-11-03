@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import swaggerUi from 'swagger-ui-express';
 import passport from './config/passport';
-import { authRoutes, permissionRoutes, userRoutes, settingsRoutes, backupRoutes } from './routes';
+import { authRoutes, permissionRoutes, roleRoutes, userRoutes, settingsRoutes, backupRoutes } from './routes';
 import healthRoutes from './routes/health.routes';
 import { swaggerSpec } from './config/swagger';
 import { errorHandler, notFoundHandler } from './middleware/error.middleware';
@@ -71,6 +71,7 @@ app.use('/', healthRoutes);
 // API Routes
 app.use('/auth', authLimiter, authRoutes);
 app.use('/permissions', permissionRoutes);
+app.use('/roles', roleRoutes);
 app.use('/users', userRoutes);
 app.use('/settings', settingsRoutes);
 app.use('/backup', backupRoutes);
