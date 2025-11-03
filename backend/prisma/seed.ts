@@ -121,28 +121,37 @@ async function main() {
   // 3. Vérification de l'administrateur
   console.log('👤 Vérification de l\'administrateur...')
   
-  // 4. Vérifier si un admin existe déjà
-  const adminUser = await prisma.user.findFirst({
-    where: {
-      role: 'admin'
-    },
-    include: {
-      permissions: true
-    }
+  // Récupérer le rôle Administrateur
+  const adminRole = await prisma.role.findUnique({
+    where: { name: 'Administrateur' }
   })
   
+  if (!adminRole) {
+    throw new Error('Le rôle Administrateur doit exister avant de créer l\'utilisateur admin')
+  }
+  
+  const adminUser = await prisma.user.findUnique({
+    where: { email: 'admin@projet0.com' },
+    include: { 
+      permissions: true,
+      roles: true
+    }
+  })
+
   if (!adminUser) {
-    // Hasher le mot de passe en utilisant la fonction hashPassword
+    // Créer l'administrateur avec le rôle Administrateur
     const hashedPassword = await hashPassword('Admin123!')
     
-    // Créer l'administrateur avec toutes les permissions
     await prisma.user.create({
       data: {
         email: 'admin@projet0.com',
         password: hashedPassword,
-        role: 'admin',
         firstName: 'Super',
         lastName: 'Admin',
+        role: 'admin',
+        roles: {
+          connect: { id: adminRole.id }
+        },
         permissions: {
           connect: allPermissions.map(p => ({ id: p.id }))
         }
@@ -154,27 +163,45 @@ async function main() {
     console.log('📧 Email: admin@projet0.com')
     console.log('🔑 Mot de passe: Admin123!')
     console.log('👤 Nom: Super Admin')
-    console.log('🛡️  Rôle: admin')
+    console.log('🛡️  Rôle: admin + Rôle Administrateur')
     console.log(`✨ Permissions: ${allPermissions.length}`)
     console.log('='.repeat(50))
     console.log('⚠️  IMPORTANT: Changez le mot de passe après la première connexion!\n')
   } else {
-    // Mettre à jour l'admin existant pour ajouter des permissions manquantes
+    // Mettre à jour l'admin existant
     const existingPermissionsIds = adminUser.permissions.map(p => p.id)
     const missingPermissions = allPermissions.filter(p => !existingPermissionsIds.includes(p.id))
     
-    if (missingPermissions.length > 0) {
-      await prisma.user.update({
-        where: { id: adminUser.id },
-        data: {
+    const hasAdminRole = adminUser.roles.some(r => r.id === adminRole.id)
+    
+    await prisma.user.update({
+      where: { id: adminUser.id },
+      data: {
+        ...(missingPermissions.length > 0 && {
           permissions: {
             connect: missingPermissions.map(p => ({ id: p.id }))
           }
-        }
-      })
-      console.log(`Administrateur existant mis à jour avec ${missingPermissions.length} nouvelles permissions.`)
+        }),
+        ...(!hasAdminRole && {
+          roles: {
+            connect: { id: adminRole.id }
+          }
+        })
+      }
+    })
+    
+    const updates = []
+    if (missingPermissions.length > 0) {
+      updates.push(`${missingPermissions.length} nouvelles permissions`)
+    }
+    if (!hasAdminRole) {
+      updates.push('rôle Administrateur assigné')
+    }
+    
+    if (updates.length > 0) {
+      console.log(`Administrateur existant mis à jour : ${updates.join(', ')}.`)
     } else {
-      console.log('L\'administrateur existant possède déjà toutes les permissions.')
+      console.log('L\'administrateur existant possède déjà toutes les permissions et rôles.')
     }
   }
 }

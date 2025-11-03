@@ -43,12 +43,13 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     // Generate token
     const token = generateToken(user.id);
 
-    // Return user data and token
+    // Return user data and token (nouvel utilisateur n'a pas de permissions)
     res.status(201).json({
       message: 'User registered successfully.',
       user: {
         id: user.id,
-        email: user.email
+        email: user.email,
+        permissions: []
       },
       token
     });
@@ -166,14 +167,47 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     // Generate token
     const token = generateToken(user.id);
 
+    // Récupérer les permissions via les rôles
+    const userWithRoles = await prisma.user.findUnique({
+      where: { id: user.id },
+      include: {
+        roles: {
+          include: {
+            permissions: true
+          }
+        },
+        permissions: true
+      }
+    });
+
+    // Collecter toutes les permissions (directes + via rôles)
+    const permissionSet = new Set<string>();
+    
+    // Ajouter les permissions directes
+    if (userWithRoles?.permissions) {
+      userWithRoles.permissions.forEach(p => permissionSet.add(p.name));
+    }
+    
+    // Ajouter les permissions via rôles
+    if (userWithRoles?.roles) {
+      userWithRoles.roles.forEach(role => {
+        if (role.permissions) {
+          role.permissions.forEach(p => permissionSet.add(p.name));
+        }
+      });
+    }
+
+    const permissions = Array.from(permissionSet);
+
     // Return user data and token
-    logger.info('Connexion réussie', { email, role: user.role });
+    logger.info('Connexion réussie', { email, role: user.role, permissions });
     res.status(200).json({
       message: 'Login successful.',
       user: {
         id: user.id,
         email: user.email,
-        role: user.role
+        role: user.role,
+        permissions
       },
       token
     });
@@ -242,6 +276,7 @@ export const getCurrentUser = async (req: Request, res: Response): Promise<void>
         role: user.role,
         firstName: user.firstName,
         lastName: user.lastName,
+        permissions: (user.permissions || []).map(p => p.name),
       }
     });
   } catch (error) {

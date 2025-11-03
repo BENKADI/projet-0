@@ -134,23 +134,32 @@ const RolesSettings: React.FC = () => {
         };
         const updated = await updateRole(editingRole.id, updateData);
         setRoles(prev => prev.map(r => r.id === updated.id ? updated : r));
-        toast.success('Rôle mis à jour avec succès');
+        if (editingRole?.isSystem) {
+          toast.success('Permissions du rôle système mises à jour avec succès');
+        } else {
+          toast.success('Rôle mis à jour avec succès');
+        }
       } else {
+        console.log('Creating new role with data:', formData);
         const createData: RoleCreateInput = {
           name: formData.name.trim(),
           description: formData.description.trim() || undefined,
           permissions: formData.permissions,
         };
+        console.log('Sending to API:', createData);
         const created = await createRole(createData);
+        console.log('Role created:', created);
         setRoles(prev => [created, ...prev]);
         toast.success('Rôle créé avec succès');
       }
 
       setIsDialogOpen(false);
       resetForm();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving role:', error);
-      toast.error('Erreur lors de la sauvegarde du rôle');
+      console.error('Error details:', error.response?.data);
+      const errorMessage = error.response?.data?.message || error.message || 'Erreur lors de la sauvegarde du rôle';
+      toast.error(errorMessage);
     }
   };
 
@@ -160,10 +169,6 @@ const RolesSettings: React.FC = () => {
   };
 
   const handleEdit = (role: Role) => {
-    if (role.isSystem) {
-      toast.warning('Les rôles système ne peuvent pas être modifiés');
-      return;
-    }
     setEditingRole(role);
     setFormData({
       name: role.name,
@@ -226,7 +231,11 @@ const RolesSettings: React.FC = () => {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Liste des Rôles</CardTitle>
-            <Button onClick={() => setIsDialogOpen(true)}>
+            <Button onClick={() => {
+              console.log('Opening new role dialog');
+              resetForm();
+              setIsDialogOpen(true);
+            }}>
               <Plus className="mr-2 h-4 w-4" />
               Nouveau Rôle
             </Button>
@@ -304,8 +313,7 @@ const RolesSettings: React.FC = () => {
                           variant="ghost" 
                           size="icon" 
                           onClick={() => handleEdit(role)}
-                          disabled={role.isSystem}
-                          title={role.isSystem ? 'Les rôles système ne peuvent pas être modifiés' : 'Modifier le rôle'}
+                          title={role.isSystem ? 'Modifier les permissions du rôle système' : 'Modifier le rôle'}
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -314,6 +322,7 @@ const RolesSettings: React.FC = () => {
                           size="icon" 
                           onClick={() => handleDelete(role.id)}
                           disabled={role.isSystem}
+                          className={role.isSystem ? 'opacity-50 cursor-not-allowed' : ''}
                           title={role.isSystem ? 'Les rôles système ne peuvent pas être supprimés' : 'Supprimer le rôle'}
                         >
                           <Trash2 className="h-4 w-4 text-destructive" />
@@ -332,8 +341,15 @@ const RolesSettings: React.FC = () => {
         <DialogContent className="max-w-3xl max-h-[80vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>
-              {editingRole ? 'Modifier le rôle' : 'Créer un nouveau rôle'}
+              {editingRole ? 
+                (editingRole.isSystem ? 'Modifier les permissions du rôle système' : 'Modifier le rôle') 
+                : 'Créer un nouveau rôle'}
             </DialogTitle>
+            {editingRole?.isSystem && (
+              <p className="text-sm text-muted-foreground mt-2">
+                ℹ️ Le nom et la description des rôles système ne peuvent pas être modifiés, mais vous pouvez ajuster leurs permissions.
+              </p>
+            )}
           </DialogHeader>
           
           <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
@@ -348,7 +364,12 @@ const RolesSettings: React.FC = () => {
                     onChange={handleInputChange}
                     placeholder="Ex: Éditeur, Modérateur..."
                     required
+                    disabled={editingRole?.isSystem}
+                    className={editingRole?.isSystem ? 'bg-muted cursor-not-allowed' : ''}
                   />
+                  {editingRole?.isSystem && (
+                    <p className="text-xs text-muted-foreground">Les rôles système ne peuvent pas être renommés</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="description">Description</Label>
@@ -358,6 +379,8 @@ const RolesSettings: React.FC = () => {
                     value={formData.description}
                     onChange={handleInputChange}
                     placeholder="Description du rôle..."
+                    disabled={editingRole?.isSystem}
+                    className={editingRole?.isSystem ? 'bg-muted cursor-not-allowed' : ''}
                   />
                 </div>
               </div>

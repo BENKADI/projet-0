@@ -40,16 +40,33 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
     
     const decoded = jwt.verify(token, jwtSecret) as JwtPayload;
     
-    // Récupérer l'utilisateur avec ses permissions
+    // Récupérer l'utilisateur avec ses permissions directes ET les permissions de son rôle
     const dbUser = await prisma.user.findUnique({
       where: { id: decoded.userId },
-      include: { permissions: true }
+      include: { 
+        permissions: true,
+        roles: {
+          include: {
+            permissions: true
+          }
+        }
+      }
     });
 
     if (!dbUser) {
       res.status(401).json({ message: 'Utilisateur non trouvé.' });
       return;
     }
+    
+    // Combiner les permissions directes de l'utilisateur et celles de ses rôles
+    const directPermissions = dbUser.permissions || [];
+    const rolePermissions = dbUser.roles.flatMap(role => role.permissions || []);
+    
+    // Fusionner et dédupliquer les permissions
+    const allPermissions = [...directPermissions, ...rolePermissions];
+    const uniquePermissions = Array.from(
+      new Map(allPermissions.map(p => [p.id, p])).values()
+    );
     
     // Transformer en AuthUser
     const user: AuthUser = {
@@ -58,7 +75,7 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
       role: dbUser.role,
       firstName: dbUser.firstName,
       lastName: dbUser.lastName,
-      permissions: dbUser.permissions
+      permissions: uniquePermissions
     };
 
     // Ajouter l'utilisateur à l'objet request pour un accès ultérieur

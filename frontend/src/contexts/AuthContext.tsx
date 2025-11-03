@@ -13,6 +13,7 @@ interface User {
   provider?: string;
   avatarUrl?: string | null;
   createdAt?: string;
+  permissions?: string[];
 }
 
 interface AuthContextProps {
@@ -51,6 +52,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(currentUser.user);
     }
     setLoading(false);
+  }, []);
+
+  // Ensure we refresh from the API on mount when a token exists (keeps permissions in sync)
+  useEffect(() => {
+    const currentUser = getCurrentUser();
+    if (currentUser?.token) {
+      // Fire and forget; internal function already handles localStorage + state update
+      refreshUser().catch(() => {});
+    }
   }, []);
 
   // Login user and set user in state

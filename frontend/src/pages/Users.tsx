@@ -348,7 +348,7 @@ const Users: React.FC = () => {
         </div>
       </div>
       <Dialog open={sheetOpen} onOpenChange={setSheetOpen}>
-        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl w-[95vw] max-h-[90vh] p-0 overflow-hidden">
           <UserForm
             key={editingUser ? editingUser.id : 'new'}
             userId={editingUser?.id}

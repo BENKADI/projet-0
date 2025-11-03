@@ -101,6 +101,14 @@ export class RoleController {
       const id = req.params.id!;
       const { name, description, permissions } = req.body;
       
+      console.log('🔧 Mise à jour du rôle:', {
+        id,
+        name,
+        description,
+        permissions,
+        permissionsCount: permissions?.length
+      });
+      
       // Vérifier si le rôle existe
       const existingRole = await roleService.getRoleById(id);
       if (!existingRole) {
@@ -110,20 +118,38 @@ export class RoleController {
 
       // Vérifier si le rôle est un rôle système
       if (existingRole.isSystem) {
-        res.status(403).json({ message: 'Les rôles système ne peuvent pas être modifiés' });
-        return;
-      }
-      
-      // Si le nom change, vérifier qu'il n'existe pas déjà
-      if (name && name !== existingRole.name) {
-        const roleWithSameName = await roleService.getRoleByName(name);
-        if (roleWithSameName) {
-          res.status(400).json({ message: 'Un rôle avec ce nom existe déjà' });
+        // Pour les rôles système, autoriser uniquement la modification des permissions
+        if (name && name !== existingRole.name) {
+          res.status(403).json({ message: 'Le nom des rôles système ne peut pas être modifié' });
           return;
+        }
+        if (description && description !== existingRole.description) {
+          res.status(403).json({ message: 'La description des rôles système ne peut pas être modifiée' });
+          return;
+        }
+        // Continuer avec la modification des permissions uniquement
+      } else {
+        // Pour les rôles non-système, vérifier le nom s'il change
+        if (name && name !== existingRole.name) {
+          const roleWithSameName = await roleService.getRoleByName(name);
+          if (roleWithSameName) {
+            res.status(400).json({ message: 'Un rôle avec ce nom existe déjà' });
+            return;
+          }
         }
       }
       
-      const role = await roleService.updateRole(id, { name, description, permissions });
+      const role = await roleService.updateRole(id, { 
+        name: existingRole.isSystem ? existingRole.name : name,
+        description: existingRole.isSystem ? existingRole.description : description,
+        permissions 
+      });
+
+      console.log('✅ Rôle mis à jour avec succès:', {
+        roleName: role.name,
+        permissionsCount: role.permissions.length,
+        permissions: role.permissions.map((p: any) => p.name)
+      });
 
       // Transformer le rôle pour inclure les noms des permissions
       const formattedRole = {

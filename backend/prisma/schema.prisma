@@ -57,7 +57,7 @@ model AppSettings {
   // Paramètres généraux
   appName               String    @default("Projet-0")
   appLanguage           String    @default("fr")
-  appCurrency           String    @default("EUR")
+  appCurrency           String    @default("DZD")
   appLogo               String?
   appDescription        String?
   

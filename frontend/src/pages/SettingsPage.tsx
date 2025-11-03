@@ -17,13 +17,13 @@ import {
   type LucideIcon
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
-import { useSearchParams } from 'react-router-dom';
-import GeneralSettings from '../components/settings/GeneralSettings';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import ProfileSettings from '../components/settings/ProfileSettings';
 import AppearanceSettings from '../components/settings/AppearanceSettings';
 import NotificationSettings from '../components/settings/NotificationSettings';
 import SecuritySettings from '../components/settings/SecuritySettings';
 import SystemSettings from '../components/settings/SystemSettings';
+import AppSettings from '../components/settings/AppSettings';
 import PermissionsSettings from '../components/settings/PermissionsSettings';
 import BackupHistory from '../components/settings/BackupHistory';
 import PushNotificationsSettings from '../components/settings/PushNotificationsSettings';
@@ -38,17 +38,25 @@ interface TabConfig {
   id: TabType;
   label: string;
   icon: LucideIcon;
-  adminOnly: boolean;
+  requiredPermissions?: string[];
   description: string;
   color: string;
 }
 
 const SettingsPage = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<TabType>('general');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Rediriger vers la connexion si l'utilisateur n'est pas authentifié
+  useEffect(() => {
+    if (!user) {
+      navigate('/login', { replace: true });
+    }
+  }, [user, navigate]);
 
   // Gérer le paramètre d'URL pour l'onglet actif
   useEffect(() => {
@@ -64,7 +72,6 @@ const SettingsPage = () => {
         id: 'general',
         label: 'Général',
         icon: Globe,
-        adminOnly: false,
         description: 'Configuration de base de l\'application',
         color: 'text-blue-500'
       },
@@ -72,7 +79,6 @@ const SettingsPage = () => {
         id: 'profile',
         label: 'Profil',
         icon: User,
-        adminOnly: false,
         description: 'Informations personnelles et préférences',
         color: 'text-green-500'
       },
@@ -80,7 +86,6 @@ const SettingsPage = () => {
         id: 'appearance',
         label: 'Apparence',
         icon: Palette,
-        adminOnly: false,
         description: 'Thème et personnalisation visuelle',
         color: 'text-purple-500'
       },
@@ -88,7 +93,6 @@ const SettingsPage = () => {
         id: 'notifications',
         label: 'Notifications',
         icon: Bell,
-        adminOnly: false,
         description: 'Préférences de notifications',
         color: 'text-orange-500'
       },
@@ -96,7 +100,6 @@ const SettingsPage = () => {
         id: 'security',
         label: 'Sécurité',
         icon: Shield,
-        adminOnly: false,
         description: 'Paramètres de sécurité et authentification',
         color: 'text-red-500'
       },
@@ -104,7 +107,7 @@ const SettingsPage = () => {
         id: 'backups',
         label: 'Sauvegardes',
         icon: Archive,
-        adminOnly: true,
+        requiredPermissions: ['admin:system'],
         description: 'Gestion des sauvegardes système',
         color: 'text-amber-500'
       },
@@ -112,7 +115,7 @@ const SettingsPage = () => {
         id: 'push',
         label: 'Push Temps Réel',
         icon: Zap,
-        adminOnly: true,
+        requiredPermissions: ['admin:system'],
         description: 'Notifications push en temps réel',
         color: 'text-cyan-500'
       },
@@ -120,7 +123,7 @@ const SettingsPage = () => {
         id: 'system',
         label: 'Système',
         icon: Server,
-        adminOnly: true,
+        requiredPermissions: ['admin:system'],
         description: 'Paramètres système avancés',
         color: 'text-gray-500'
       },
@@ -128,31 +131,42 @@ const SettingsPage = () => {
         id: 'permissions',
         label: 'Permissions',
         icon: Shield,
-        adminOnly: true,
+        requiredPermissions: ['read:permissions', 'manage:permissions'],
         description: 'Gestion des permissions utilisateur',
         color: 'text-indigo-500'
       },
     ]
   ), []);
 
+  const isTabDisabled = useCallback(
+    (tab: TabConfig) => {
+      if (!tab.requiredPermissions || tab.requiredPermissions.length === 0) {
+        return false; // Onglet accessible à tous
+      }
+      
+      const userPerms = user?.permissions || [];
+      // Vérifier si l'utilisateur a AU MOINS UNE des permissions requises
+      return !tab.requiredPermissions.some(perm => userPerms.includes(perm));
+    },
+    [user?.permissions]
+  );
+
   const filteredTabs = useMemo(() => {
+    // D'abord, filtrer par permissions
+    const accessibleTabs = tabs.filter(tab => !isTabDisabled(tab));
+    
     if (!searchQuery) {
-      return tabs;
+      return accessibleTabs;
     }
 
     const query = searchQuery.toLowerCase();
-    const matches = tabs.filter((tab) =>
+    const matches = accessibleTabs.filter((tab) =>
       tab.label.toLowerCase().includes(query) ||
       tab.description.toLowerCase().includes(query)
     );
 
-    return matches.length > 0 ? matches : tabs;
-  }, [tabs, searchQuery]);
-
-  const isTabDisabled = useCallback(
-    (tab: TabConfig) => tab.adminOnly && user?.role !== 'admin',
-    [user?.role]
-  );
+    return matches.length > 0 ? matches : accessibleTabs;
+  }, [tabs, searchQuery, isTabDisabled]);
 
   const activeTabConfig = tabs.find(tab => tab.id === activeTab);
 
@@ -172,7 +186,7 @@ const SettingsPage = () => {
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'general': return <GeneralSettings />;
+      case 'general': return <AppSettings />;
       case 'profile': return <ProfileSettings />;
       case 'appearance': return <AppearanceSettings />;
       case 'notifications': return <NotificationSettings />;
@@ -181,7 +195,7 @@ const SettingsPage = () => {
       case 'push': return <PushNotificationsSettings />;
       case 'system': return <SystemSettings />;
       case 'permissions': return <PermissionsSettings />;
-      default: return <GeneralSettings />;
+      default: return <AppSettings />;
     }
   };
 
@@ -228,70 +242,41 @@ const SettingsPage = () => {
                 {filteredTabs.map((tab) => {
                   const Icon = tab.icon;
                   const isActive = activeTab === tab.id;
-                  const disabled = isTabDisabled(tab);
 
                   return (
                     <li key={tab.id}>
                       <button
                         onClick={() => handleTabChange(tab.id, false)}
-                        disabled={disabled}
                         className={cn(
                           'w-full flex items-center gap-3 px-3 py-3 text-left rounded-lg transition-all duration-200 group',
-                          isActive && !disabled
+                          isActive
                             ? 'bg-primary/10 text-primary shadow-sm'
-                            : disabled
-                            ? 'opacity-60 cursor-not-allowed text-gray-400 dark:text-gray-500'
                             : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'
                         )}
                       >
                         <div className={cn(
                           'p-2 rounded-lg transition-colors',
-                          isActive && !disabled
+                          isActive
                             ? 'bg-primary/20'
-                            : disabled
-                            ? 'bg-gray-100 dark:bg-gray-700 opacity-50'
                             : 'bg-gray-100 dark:bg-gray-700 group-hover:bg-gray-200 dark:group-hover:bg-gray-600'
                         )}>
-                          <Icon className={cn('h-5 w-5', disabled ? 'text-gray-400' : tab.color)} />
+                          <Icon className={cn('h-5 w-5', tab.color)} />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className={cn(
-                              'font-medium truncate',
-                              disabled && 'line-through'
-                            )}>
+                            <span className="font-medium truncate">
                               {tab.label}
                             </span>
-                            <Badge variant={disabled ? 'outline' : 'secondary'} className="text-xs">
-                              {disabled ? (
-                                <>
-                                  <Crown className="h-3 w-3 mr-1" />
-                                  Admin requis
-                                </>
-                              ) : (
-                                tab.adminOnly ? (
-                                  <>
-                                    <Crown className="h-3 w-3 mr-1" />
-                                    Admin
-                                  </>
-                                ) : (
-                                  'Utilisateur'
-                                )
-                              )}
+                            <Badge variant="secondary" className="text-xs">
+                              <Sparkles className="h-3 w-3 mr-1" />
+                              Accès
                             </Badge>
                           </div>
-                          <p
-                            className={cn(
-                              'text-xs truncate',
-                              !disabled
-                                ? 'text-gray-500 dark:text-gray-400'
-                                : 'text-gray-400 dark:text-gray-500'
-                            )}
-                          >
+                          <p className="text-xs truncate text-gray-500 dark:text-gray-400">
                             {tab.description}
                           </p>
                         </div>
-                        {isActive && !disabled && (
+                        {isActive && (
                           <div className="w-1 h-8 bg-primary rounded-full"></div>
                         )}
                       </button>

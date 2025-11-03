@@ -88,22 +88,32 @@ export class RoleService {
   }) {
     const { permissions: permissionNames, ...roleData } = data;
 
-    // Si des permissions sont fournies, récupérer leurs IDs
+    // Si des permissions sont fournies (même un tableau vide), les mettre à jour
     let permissionsUpdate = {};
-    if (permissionNames) {
-      const permissions = await prisma.permission.findMany({
-        where: {
-          name: {
-            in: permissionNames
+    if (permissionNames !== undefined) {
+      if (permissionNames.length === 0) {
+        // Tableau vide = supprimer toutes les permissions
+        permissionsUpdate = {
+          permissions: {
+            set: []
           }
-        }
-      });
+        };
+      } else {
+        // Récupérer les permissions par leurs noms
+        const permissions = await prisma.permission.findMany({
+          where: {
+            name: {
+              in: permissionNames
+            }
+          }
+        });
 
-      permissionsUpdate = {
-        permissions: {
-          set: permissions.map(p => ({ id: p.id }))
-        }
-      };
+        permissionsUpdate = {
+          permissions: {
+            set: permissions.map(p => ({ id: p.id }))
+          }
+        };
+      }
     }
 
     return prisma.role.update({

@@ -1,6 +1,6 @@
 import express from 'express';
 import userController from '../controllers/userController';
-import { authenticate, isAdmin, hasPermission } from '../middleware/auth.middleware';
+import { authenticate, hasPermission } from '../middleware/auth.middleware';
 import avatarRoutes from './avatarRoutes';
 
 const router = express.Router();
@@ -15,13 +15,11 @@ router.use('/', avatarRoutes);
 router.get('/me', userController.getMe);
 router.put('/me', userController.updateMe);
 
-// Routes accessibles aux administrateurs uniquement
-router.get('/', isAdmin, userController.getAllUsers);
-router.post('/', isAdmin, userController.createUser);
-
-// Routes accessibles aux administrateurs ou aux utilisateurs avec la permission spécifique
+// Routes basées sur les permissions
+router.get('/', hasPermission('read:users'), userController.getAllUsers);
+router.post('/', hasPermission('create:users'), userController.createUser);
 router.get('/:id', hasPermission('read:users'), userController.getUserById);
-router.put('/:id', isAdmin, userController.updateUser);
-router.delete('/:id', isAdmin, userController.deleteUser);
+router.put('/:id', hasPermission('update:users'), userController.updateUser);
+router.delete('/:id', hasPermission('delete:users'), userController.deleteUser);
 
 export default router;

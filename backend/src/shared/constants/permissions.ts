@@ -15,12 +15,23 @@ export const PERMISSION_DEFINITIONS = [
   { name: 'update:permissions', description: 'Modifier des permissions existantes' },
   { name: 'delete:permissions', description: 'Supprimer des permissions' },
   { name: 'export:permissions', description: 'Exporter les permissions' },
+  { name: 'manage:permissions', description: 'Gérer les permissions des utilisateurs' },
+
+  // Roles management
+  { name: 'create:roles', description: 'Créer de nouveaux rôles' },
+  { name: 'read:roles', description: 'Voir la liste des rôles' },
+  { name: 'update:roles', description: 'Modifier des rôles existants' },
+  { name: 'delete:roles', description: 'Supprimer des rôles' },
+  { name: 'manage:roles', description: 'Gérer les rôles des utilisateurs' },
 
   // Profile & settings
   { name: 'read:profile', description: 'Consulter son profil utilisateur' },
   { name: 'update:profile', description: 'Mettre à jour son profil utilisateur' },
   { name: 'read:settings', description: 'Consulter les paramètres de l’application' },
   { name: 'update:settings', description: 'Mettre à jour les paramètres de l’application' },
+
+  // System administration
+  { name: 'admin:system', description: 'Accès administrateur aux paramètres système' },
 
   // Notifications (prévisionnel)
   { name: 'send:notifications', description: 'Envoyer des notifications aux utilisateurs' },

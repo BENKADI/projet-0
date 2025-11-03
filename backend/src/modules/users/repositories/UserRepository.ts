@@ -1,4 +1,4 @@
-import { PrismaClient, User, UserRole, Permission } from '@prisma/client';
+import { PrismaClient, type User, UserRole, type Permission } from '../../../../generated/prisma';
 
 export interface UserFilters {
   search?: string;
@@ -189,6 +189,11 @@ export class UserRepository {
       where: { id: userId },
       include: {
         permissions: true,
+        roles: {
+          include: {
+            permissions: true,
+          },
+        },
       },
     });
 
@@ -196,43 +201,14 @@ export class UserRepository {
       return [];
     }
 
-    // Get role-based permissions
-    const rolePermissions = await this.getRolePermissions(user.role);
+    // Permissions via roles (DB relations)
+    const rolePermissions = (user.roles || []).flatMap(r => (r.permissions || []).map(p => p.name));
 
-    // Get user-specific permissions
+    // User-specific permissions (direct)
     const userPermissions = user.permissions.map(p => p.name);
 
     // Combine and deduplicate
     return [...new Set([...rolePermissions, ...userPermissions])];
-  }
-
-  private async getRolePermissions(role: UserRole): Promise<string[]> {
-    // Define default permissions for each role
-    const rolePermissionsMap = {
-      [UserRole.USER]: [
-        'read:profile',
-        'update:profile',
-        'read:settings',
-        'update:settings',
-      ],
-      [UserRole.ADMIN]: [
-        'create:users',
-        'read:users',
-        'update:users',
-        'delete:users',
-        'create:permissions',
-        'read:permissions',
-        'update:permissions',
-        'delete:permissions',
-        'read:settings',
-        'update:settings',
-        'read:analytics',
-        'export:users',
-        'export:permissions',
-      ],
-    };
-
-    return rolePermissionsMap[role] || [];
   }
 
   async addPermissionToUser(userId: string, permissionId: string): Promise<void> {

@@ -34,7 +34,12 @@ class UserController {
         return;
       }
 
-      res.status(200).json(me);
+      // Ajouter les permissions agrégées (directes + via rôles) depuis le middleware authenticate
+      const permissionNames = (req.user?.permissions || []).map(p => p.name);
+      res.status(200).json({
+        ...me,
+        permissions: permissionNames,
+      });
       return;
     } catch (error: any) {
       res.status(500).json({ message: error.message || 'Erreur lors de la récupération du profil' });
@@ -173,6 +178,17 @@ class UserController {
       
       const hashedPassword = await hashPassword(password);
       
+      // Trouver le rôle correspondant dans la table Role (si existe)
+      const roleName = role || 'user';
+      const roleRecord = await prisma.role.findFirst({
+        where: {
+          name: {
+            equals: roleName,
+            mode: 'insensitive'
+          }
+        }
+      });
+      
       // Création d'un nouvel utilisateur
       const newUser = await prisma.user.create({
         data: {
@@ -180,7 +196,12 @@ class UserController {
           password: hashedPassword,
           firstName,
           lastName,
-          role: role || 'user',
+          role: roleName,
+          ...(roleRecord && {
+            roles: {
+              connect: { id: roleRecord.id }
+            }
+          }),
           ...(permissionIds && {
             permissions: {
               connect: permissionIds.map((id: number) => ({ id }))
@@ -242,6 +263,26 @@ class UserController {
         updateData.password = await hashPassword(password);
       }
       
+      // Si le rôle change, trouver le rôle correspondant dans la table Role
+      let rolesUpdate: any = undefined;
+      if (role !== undefined) {
+        const roleRecord = await prisma.role.findFirst({
+          where: {
+            name: {
+              equals: role,
+              mode: 'insensitive'
+            }
+          }
+        });
+        
+        if (roleRecord) {
+          // Mettre à jour la relation many-to-many
+          rolesUpdate = {
+            set: [{ id: roleRecord.id }] // Remplace tous les rôles par celui-ci
+          };
+        }
+      }
+      
       // Mise à jour des permissions si fournies
       const permissionsUpdate = permissionIds ? {
         set: [], // Retire toutes les permissions existantes
@@ -253,6 +294,7 @@ class UserController {
         where: { id: Number(id) },
         data: {
           ...updateData,
+          ...(rolesUpdate && { roles: rolesUpdate }),
           ...(permissionsUpdate && { permissions: permissionsUpdate })
         },
         select: {

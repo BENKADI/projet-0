@@ -2,6 +2,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeProvider';
+import { AppSettingsProvider } from './contexts/AppSettingsContext';
 import './global.css';
 import App from './App';
 
@@ -20,9 +21,11 @@ root.render(
       v7_startTransition: true,
       v7_relativeSplatPath: true,
     }}>
-      <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-        <App />
-      </ThemeProvider>
+      <AppSettingsProvider>
+        <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+          <App />
+        </ThemeProvider>
+      </AppSettingsProvider>
     </Router>
   </React.StrictMode>
 );
