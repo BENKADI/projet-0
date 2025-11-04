@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { DynamicThemeProvider } from './components/settings/DynamicThemeSettings';
 import ProtectedRoute from './components/ProtectedRoute';
+import RequirePermission from './components/RequirePermission';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import AuthCallback from './pages/AuthCallback';
@@ -39,9 +40,22 @@ function App() {
           <Route element={<ProtectedRoute />}>
             <Route path="/" element={<Layout />}>
               <Route path="dashboard" element={<Dashboard />} />
-              <Route path="users" element={<Users />} />
-              <Route path="settings/*" element={<SettingsPage />} />
-              <Route path="permissions" element={<Navigate to="/settings?tab=permissions" replace />} />
+
+              {/* Users requires read:users */}
+              <Route element={<RequirePermission permission="read:users" />}>
+                <Route path="users" element={<Users />} />
+              </Route>
+
+              {/* Settings requires read:settings */}
+              <Route element={<RequirePermission permission="read:settings" />}>
+                <Route path="settings/*" element={<SettingsPage />} />
+              </Route>
+
+              {/* Permissions deep-link guarded by manage:permissions */}
+              <Route element={<RequirePermission permission="manage:permissions" />}>
+                <Route path="permissions" element={<Navigate to="/settings?tab=permissions" replace />} />
+              </Route>
+
               <Route path="*" element={<Navigate to="dashboard" replace />} />
             </Route>
           </Route>

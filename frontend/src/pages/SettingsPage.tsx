@@ -131,7 +131,7 @@ const SettingsPage = () => {
         id: 'permissions',
         label: 'Permissions',
         icon: Shield,
-        requiredPermissions: ['read:permissions', 'manage:permissions'],
+        requiredPermissions: ['manage:permissions'],
         description: 'Gestion des permissions utilisateur',
         color: 'text-indigo-500'
       },

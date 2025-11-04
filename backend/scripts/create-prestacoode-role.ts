@@ -5,18 +5,15 @@ const prisma = new PrismaClient()
 async function createPrestacoodeRole() {
   console.log('\n🎭 Création du rôle Prestacoode...\n')
   
-  // Récupérer les permissions à assigner
+  // Récupérer les permissions à assigner (CRUD utilisateurs)
   const permissions = await prisma.permission.findMany({
     where: {
       name: {
         in: [
+          'create:users',
           'read:users',
-          'read:permissions',
-          'read:roles',
-          'read:analytics',
-          'read:profile',
-          'update:profile',
-          'read:settings'
+          'update:users',
+          'delete:users',
         ]
       }
     }
@@ -27,18 +24,18 @@ async function createPrestacoodeRole() {
     process.exit(1)
   }
   
-  // Créer ou mettre à jour le rôle Prestacoode
+  // Créer ou mettre à jour le rôle prestacoode
   const role = await prisma.role.upsert({
-    where: { name: 'Prestacoode' },
+    where: { name: 'prestacoode' },
     update: {
-      description: 'Rôle pour les prestataires de code avec accès en lecture',
+      description: 'Rôle prestataire avec gestion des utilisateurs (CRUD)',
       permissions: {
         set: permissions.map(p => ({ id: p.id }))
       }
     },
     create: {
-      name: 'Prestacoode',
-      description: 'Rôle pour les prestataires de code avec accès en lecture',
+      name: 'prestacoode',
+      description: 'Rôle prestataire avec gestion des utilisateurs (CRUD)',
       isSystem: false,
       permissions: {
         connect: permissions.map(p => ({ id: p.id }))

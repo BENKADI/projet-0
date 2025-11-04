@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   Users,
   Settings,
+  Shield,
   LogOut,
   PanelLeftClose,
   PanelRightClose,
@@ -41,6 +42,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggleCollapse
     );
 
   const iconClasses = 'h-5 w-5';
+
+  const hasPerm = (perm: string) => {
+    if (!user) return false;
+    if (user.role === 'admin') return true;
+    return (user.permissions || []).includes(perm);
+  };
 
   return (
     <div
@@ -160,25 +167,33 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggleCollapse
               {!isCollapsed && <span>Dashboard</span>}
             </Link>
           </li>
-          {user?.role === 'admin' && (
-            <>
-              <li>
-                <Link to="/users" className={linkClasses('/users')}>
-                  <Users className={cn(iconClasses, !isCollapsed && 'mr-3')} />
-                  {!isCollapsed && <span>Utilisateurs</span>}
-                </Link>
-              </li>
-                          </>
+          {hasPerm('read:users') && (
+            <li>
+              <Link to="/users" className={linkClasses('/users')}>
+                <Users className={cn(iconClasses, !isCollapsed && 'mr-3')} />
+                {!isCollapsed && <span>Utilisateurs</span>}
+              </Link>
+            </li>
+          )}
+          {hasPerm('manage:permissions') && (
+            <li>
+              <Link to="/settings?tab=permissions" className={linkClasses('/settings')}>
+                <Shield className={cn(iconClasses, !isCollapsed && 'mr-3')} />
+                {!isCollapsed && <span>Permissions</span>}
+              </Link>
+            </li>
           )}
         </ul>
       </nav>
 
       {/* Paramètres - Toujours en bas avant la déconnexion */}
       <div className="p-2 border-t border-border">
-        <Link to="/settings" className={linkClasses('/settings')}>
-          <Settings className={cn(iconClasses, !isCollapsed && 'mr-3')} />
-          {!isCollapsed && <span>Paramètres</span>}
-        </Link>
+        {hasPerm('read:settings') && (
+          <Link to="/settings" className={linkClasses('/settings')}>
+            <Settings className={cn(iconClasses, !isCollapsed && 'mr-3')} />
+            {!isCollapsed && <span>Paramètres</span>}
+          </Link>
+        )}
       </div>
 
       {/* Pied de page avec bouton de déconnexion */}
