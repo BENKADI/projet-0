@@ -85,7 +85,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggleCollapse
           </button>
         )}
       </div>
-      
+
       {/* Bouton pour agrandir quand collapsed */}
       {isCollapsed && (
         <button
@@ -123,12 +123,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggleCollapse
                 )}
                 <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-green-500 ring-2 ring-background" />
               </div>
-              
+
               {/* Infos utilisateur */}
               <div className="flex-1 min-w-0">
                 <div className="font-semibold text-sm truncate text-foreground">
-                  {user.firstName && user.lastName 
-                    ? `${user.firstName} ${user.lastName}` 
+                  {user.firstName && user.lastName
+                    ? `${user.firstName} ${user.lastName}`
                     : user.email}
                 </div>
                 <div className="flex items-center gap-2 mt-0.5">
@@ -137,7 +137,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggleCollapse
                   </span>
                 </div>
               </div>
-              
+
               <ChevronDown className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
             </Link>
           ) : (
@@ -172,14 +172,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggleCollapse
               <Link to="/users" className={linkClasses('/users')}>
                 <Users className={cn(iconClasses, !isCollapsed && 'mr-3')} />
                 {!isCollapsed && <span>Utilisateurs</span>}
-              </Link>
-            </li>
-          )}
-          {hasPerm('manage:permissions') && (
-            <li>
-              <Link to="/settings?tab=permissions" className={linkClasses('/settings')}>
-                <Shield className={cn(iconClasses, !isCollapsed && 'mr-3')} />
-                {!isCollapsed && <span>Permissions</span>}
               </Link>
             </li>
           )}

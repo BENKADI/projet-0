@@ -21,11 +21,11 @@ root.render(
       v7_startTransition: true,
       v7_relativeSplatPath: true,
     }}>
-      <AppSettingsProvider>
-        <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+      <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+        <AppSettingsProvider>
           <App />
-        </ThemeProvider>
-      </AppSettingsProvider>
+        </AppSettingsProvider>
+      </ThemeProvider>
     </Router>
   </React.StrictMode>
 );

@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { getAppSettings, type AppSettings } from '@/services/settingsService';
 
+const THEME_STORAGE_KEY = 'vite-ui-theme';
+
 interface AppSettingsContextType {
   settings: AppSettings | null;
   loading: boolean;
@@ -27,19 +29,21 @@ export const AppSettingsProvider: React.FC<{ children: ReactNode }> = ({ childre
   };
 
   const applySettings = (settings: AppSettings) => {
-    // Appliquer le thème
     const root = document.documentElement;
-    if (settings.theme === 'dark') {
-      root.classList.add('dark');
-    } else if (settings.theme === 'light') {
-      root.classList.remove('dark');
-    } else {
-      // Auto : suivre les préférences système
-      const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      if (isDark) {
+    const hasUserThemePreference = Boolean(localStorage.getItem(THEME_STORAGE_KEY));
+
+    if (!hasUserThemePreference) {
+      if (settings.theme === 'dark') {
         root.classList.add('dark');
-      } else {
+      } else if (settings.theme === 'light') {
         root.classList.remove('dark');
+      } else {
+        const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (isDark) {
+          root.classList.add('dark');
+        } else {
+          root.classList.remove('dark');
+        }
       }
     }
 
@@ -65,12 +69,14 @@ export const AppSettingsProvider: React.FC<{ children: ReactNode }> = ({ childre
   useEffect(() => {
     if (!settings) return;
 
-    // Écouter les changements de thème système si mode auto
+    const hasUserThemePreference = Boolean(localStorage.getItem(THEME_STORAGE_KEY));
+    if (hasUserThemePreference || settings.theme !== 'auto') {
+      return;
+    }
+
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleChange = () => {
-      if (settings.theme === 'auto') {
-        applySettings(settings);
-      }
+      applySettings(settings);
     };
 
     mediaQuery.addEventListener('change', handleChange);
